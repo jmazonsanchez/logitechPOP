@@ -21,8 +21,9 @@ from gi.repository import Gtk, Gdk, Pango
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ICON_FILE = os.path.join(SCRIPT_DIR, "logipop.svg")
 
-# Importar catálogo común
+# Importar catálogo común y gestor de temas
 from catalog import EMOJI_CATEGORIES
+from theme import is_dark_mode, get_picker_css, setup_theme_listener
 
 def get_socket_path():
     runtime_dir = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
@@ -54,11 +55,38 @@ class MiniEmojiPicker(Gtk.Window):
             except Exception:
                 pass
 
-        self.apply_css()
+        # Proveedor de CSS dinámico para modo claro / oscuro
+        self.css_provider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            self.css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
         self.build_ui()
+
+        # Escuchar cambios en el tema del sistema y aplicar el estilo inicial
+        self.theme_listener = setup_theme_listener(self.on_theme_changed)
+        self.apply_theme(is_dark_mode())
 
         # Atajo Esc para cerrar sin pegar
         self.connect("key-press-event", self.on_key_pressed)
+
+    def update_header_colors(self, is_dark: bool):
+        logi_color = "#A29BFE" if is_dark else "#6C5CE7"
+        if hasattr(self, "title_lbl"):
+            self.title_lbl.set_markup(
+                f"<span font_desc='Ubuntu, Cantarell, Sans Bold 13' color='{logi_color}'>logi</span>"
+                f"<span font_desc='Ubuntu, Cantarell, Sans Heavy 12' background='#FFD200' color='#18181B'> POP </span>"
+            )
+
+    def apply_theme(self, is_dark: bool):
+        css = get_picker_css(is_dark)
+        self.css_provider.load_from_data(css)
+        self.update_header_colors(is_dark)
+
+    def on_theme_changed(self, is_dark: bool):
+        self.apply_theme(is_dark)
 
     def build_ui(self):
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
@@ -68,12 +96,9 @@ class MiniEmojiPicker(Gtk.Window):
         # 1. Barra de Encabezado y Búsqueda
         top_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         
-        title_lbl = Gtk.Label()
-        title_lbl.set_markup(
-            "<span font_desc='Ubuntu, Cantarell, Sans Bold 13' color='#6C5CE7'>logi</span>"
-            "<span font_desc='Ubuntu, Cantarell, Sans Heavy 12' background='#FFD200' color='#18181B'> POP </span>"
-        )
-        top_box.pack_start(title_lbl, False, False, 0)
+        self.title_lbl = Gtk.Label()
+        self.update_header_colors(is_dark_mode())
+        top_box.pack_start(self.title_lbl, False, False, 0)
 
         self.search_entry = Gtk.SearchEntry()
         self.search_entry.set_placeholder_text("Buscar emoji... (Esc para salir)")
@@ -192,50 +217,7 @@ class MiniEmojiPicker(Gtk.Window):
         self.destroy()
         Gtk.main_quit()
 
-    def apply_css(self):
-        css_provider = Gtk.CssProvider()
-        css = b"""
-        window {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-        }
-        .picker-close-btn {
-            font-size: 13px;
-            font-weight: bold;
-            padding: 4px 8px;
-            border-radius: 6px;
-            background-color: #f1f3f6;
-            border: 1px solid #d0d7de;
-        }
-        .picker-close-btn:hover {
-            background-color: #ffeef0;
-            color: #cf222e;
-            border-color: #cf222e;
-        }
-        .picker-notebook tab {
-            padding: 4px 10px;
-            font-size: 16px;
-        }
-        .picker-emoji-btn {
-            font-size: 20px;
-            padding: 0;
-            margin: 0;
-            border-radius: 6px;
-            background-color: #ffffff;
-            border: 1px solid #e1e4e8;
-            transition: all 100ms ease;
-        }
-        .picker-emoji-btn:hover {
-            background-color: #f0edff;
-            border-color: #6c5ce7;
-        }
-        """
-        css_provider.load_from_data(css)
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+
 
 def main():
     app = MiniEmojiPicker()

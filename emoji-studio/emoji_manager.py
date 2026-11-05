@@ -40,6 +40,7 @@ DEFAULT_EMOJIS = {
 
 # Catálogo exhaustivo de Emojis de Unicode importado desde catalog.py
 from catalog import EMOJI_CATEGORIES
+from theme import is_dark_mode, get_manager_css, setup_theme_listener
 
 class EmojiManagerWindow(Gtk.Window):
     def __init__(self):
@@ -60,8 +61,42 @@ class EmojiManagerWindow(Gtk.Window):
         self.entries = {}
         self.cards = {}
 
-        self.apply_css()
+        # Proveedor de CSS dinámico para modo claro / oscuro en tiempo real
+        self.css_provider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            self.css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
         self.build_ui()
+
+        # Configurar escucha del tema del sistema y aplicar el estilo inicial
+        self.theme_listener = setup_theme_listener(self.on_theme_changed)
+        self.apply_theme(is_dark_mode())
+
+    def update_header_colors(self, is_dark: bool):
+        logi_color = "#F4F4F5" if is_dark else "#1E1E24"
+        sub_color = "#A1A1AA" if is_dark else "#666666"
+        accent_color = "#A29BFE" if is_dark else "#6C5CE7"
+        if hasattr(self, "logo_label"):
+            self.logo_label.set_markup(
+                f"<span font_desc='Ubuntu, Cantarell, Sans Bold 20' color='{logi_color}'>logi</span>"
+                f"<span font_desc='Ubuntu, Cantarell, Sans Heavy 18' background='#FFD200' color='#18181B'> POP </span>"
+                f"<span font_desc='Ubuntu, Cantarell, Sans Bold 11' color='{accent_color}'> EMOJI STUDIO</span>"
+            )
+        if hasattr(self, "subtitle_label"):
+            self.subtitle_label.set_markup(
+                f"<span size='small' color='{sub_color}'>Configurador de teclas de emojis para Logitech POP Keys (Linux)</span>"
+            )
+
+    def apply_theme(self, is_dark: bool):
+        css = get_manager_css(is_dark)
+        self.css_provider.load_from_data(css)
+        self.update_header_colors(is_dark)
+
+    def on_theme_changed(self, is_dark: bool):
+        self.apply_theme(is_dark)
 
     def build_ui(self):
         # Contenedor con Scroll para garantizar que nunca se corte la ventana
@@ -91,20 +126,16 @@ class EmojiManagerWindow(Gtk.Window):
 
         title_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
 
-        logo_label = Gtk.Label()
-        logo_label.set_markup(
-            "<span font_desc='Ubuntu, Cantarell, Sans Bold 20' color='#1E1E24'>logi</span>"
-            "<span font_desc='Ubuntu, Cantarell, Sans Heavy 18' background='#FFD200' color='#18181B'> POP </span>"
-            "<span font_desc='Ubuntu, Cantarell, Sans Bold 11' color='#6C5CE7'> EMOJI STUDIO</span>"
-        )
-        logo_label.set_xalign(0)
+        self.logo_label = Gtk.Label()
+        self.logo_label.set_xalign(0)
 
-        subtitle_label = Gtk.Label()
-        subtitle_label.set_markup("<span size='small' color='#666'>Configurador de teclas de emojis para Logitech POP Keys (Linux)</span>")
-        subtitle_label.set_xalign(0)
+        self.subtitle_label = Gtk.Label()
+        self.subtitle_label.set_xalign(0)
 
-        title_vbox.pack_start(logo_label, False, False, 0)
-        title_vbox.pack_start(subtitle_label, False, False, 0)
+        self.update_header_colors(is_dark_mode())
+
+        title_vbox.pack_start(self.logo_label, False, False, 0)
+        title_vbox.pack_start(self.subtitle_label, False, False, 0)
         header_box.pack_start(title_vbox, False, False, 0)
 
         main_box.pack_start(header_box, False, False, 0)
@@ -441,94 +472,7 @@ class EmojiManagerWindow(Gtk.Window):
         dialog.run()
         dialog.destroy()
 
-    def apply_css(self):
-        css_provider = Gtk.CssProvider()
-        css = b"""
-        window {
-            background-color: #f8f9fa;
-        }
-        .keys-frame {
-            border: 1px solid #dcdce6;
-            border-radius: 8px;
-            font-weight: bold;
-            background-color: #ffffff;
-        }
-        .key-card {
-            background-color: #fcfcfd;
-            border-radius: 8px;
-            border: 2px solid #e2e2ec;
-            transition: all 150ms ease;
-        }
-        .key-card-active {
-            border-color: #6c5ce7;
-            background-color: #f7f4ff;
-            box-shadow: 0 0 6px rgba(108, 92, 231, 0.3);
-        }
-        .emoji-display {
-            font-size: 24px;
-            padding: 2px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            background-color: #ffffff;
-        }
-        .test-btn {
-            font-size: 11px;
-            padding: 3px 6px;
-            border-radius: 5px;
-        }
-        .palette-frame {
-            border: 1px solid #dcdce6;
-            border-radius: 8px;
-            font-weight: bold;
-            background-color: #ffffff;
-        }
-        .palette-notebook tab {
-            padding: 4px 8px;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .palette-emoji-btn {
-            font-size: 18px;
-            padding: 0;
-            margin: 0;
-            border-radius: 6px;
-            background-color: #ffffff;
-            border: 1px solid #e0e0e8;
-        }
-        .palette-emoji-btn:hover {
-            background-color: #f0edff;
-            border-color: #6c5ce7;
-        }
-        .key5-card {
-            background-color: #f1f3f6;
-            border: 1px solid #d0d7de;
-            border-radius: 8px;
-        }
-        .test-btn-wide {
-            font-size: 12px;
-            padding: 5px 10px;
-            border-radius: 6px;
-        }
-        .save-btn {
-            background-image: linear-gradient(to bottom, #6c5ce7, #5344c7);
-            color: white;
-            font-weight: bold;
-            font-size: 13px;
-            padding: 8px 16px;
-            border-radius: 6px;
-        }
-        .reset-btn {
-            font-size: 12px;
-            padding: 8px 12px;
-            border-radius: 6px;
-        }
-        """
-        css_provider.load_from_data(css)
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+
 
 def main():
     if "--apply" in sys.argv or "--setup" in sys.argv:
