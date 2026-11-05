@@ -16,6 +16,7 @@ if not sys.platform.startswith("linux"):
 
 import json
 import subprocess
+import time
 import yaml
 
 import gi
@@ -35,6 +36,10 @@ ICON_FILE = os.path.join(SCRIPT_DIR, "logipop.svg")
 SOLAAR_CONFIG_DIR = os.path.expanduser("~/.config/solaar")
 SOLAAR_CONFIG_FILE = os.path.join(SOLAAR_CONFIG_DIR, "config.yaml")
 SOLAAR_RULES_FILE = os.path.join(SOLAAR_CONFIG_DIR, "rules.yaml")
+
+# CIDs HID++ de las 5 teclas de emoji del POP Keys (Emoji Smiley Heart Eyes, Crying Face,
+# Smiley, Smilie With Tears y Emoji/selector) que Solaar debe desviar (divert-keys = 1)
+EMOJI_KEY_CIDS = (260, 261, 262, 263, 264)
 
 DEFAULT_EMOJIS = {
     "1": "😍",
@@ -382,9 +387,14 @@ class EmojiManagerWindow(Gtk.Window):
             except Exception:
                 pass
 
-        # Si ya están vinculadas, NO reiniciar Solaar para evitar demoras de conexión de hardware
-        if rules_already_installed:
+        # Si ya están vinculadas y las teclas siguen desviadas, NO reiniciar Solaar
+        # para evitar demoras de conexión de hardware
+        if rules_already_installed and self._emoji_keys_diverted():
             return True, "⚡ Aplicado instantáneamente. El teclado mantiene su conexión activa sin demoras."
+
+        # Solaar reescribe config.yaml con su estado en memoria (al conectar dispositivos y al
+        # cerrarse), así que hay que detenerlo ANTES de editarlo o el cambio se pierde.
+        self._stop_solaar()
 
         # A. Actualizar config.yaml para activar divert-keys en POP Keys
         try:
@@ -394,13 +404,14 @@ class EmojiManagerWindow(Gtk.Window):
                 if isinstance(data, list):
                     for item in data:
                         if isinstance(item, dict) and item.get("_NAME") == "Logi POP Keys":
-                            dk = item.get("divert-keys", {})
-                            for key_id in [260, 261, 262, 263, 264]:
+                            dk = item.get("divert-keys") or {}
+                            for key_id in EMOJI_KEY_CIDS:
                                 dk[key_id] = 1
                             item["divert-keys"] = dk
                     with open(SOLAAR_CONFIG_FILE, "w", encoding="utf-8") as f:
                         yaml.dump(data, f, default_flow_style=False, sort_keys=False)
         except Exception as e:
+            self._start_solaar()
             return False, f"Advertencia al modificar Solaar config: {e}"
 
         # B. Actualizar rules.yaml preservando otras reglas existentes
@@ -450,11 +461,46 @@ class EmojiManagerWindow(Gtk.Window):
                 f.write("%YAML 1.3\n# Reglas automáticas para Logitech POP (LogiPop Studio)\n")
                 yaml.dump_all(all_rules, f, explicit_start=True, default_flow_style=False, sort_keys=False)
         except Exception as e:
+            self._start_solaar()
             return False, f"Advertencia al escribir rules.yaml: {e}"
 
-        # C. Reiniciar Solaar para aplicar cambios
+        # C. Volver a iniciar Solaar para que aplique el desvío de teclas y las reglas
+        if self._start_solaar():
+            return True, "Solaar se ha recargado en segundo plano con las nuevas reglas activadas."
+        return True, "Reglas guardadas. Inicia Solaar para aplicar los cambios."
+
+    @staticmethod
+    def _emoji_keys_diverted():
+        """True si todas las entradas 'Logi POP Keys' de config.yaml desvían las 5 teclas de emoji."""
         try:
-            subprocess.run(["killall", "-q", "solaar"], stderr=subprocess.DEVNULL)
+            with open(SOLAAR_CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+        except Exception:
+            return False
+        if not isinstance(data, list):
+            return False
+        pop_keys = [d for d in data if isinstance(d, dict) and d.get("_NAME") == "Logi POP Keys"]
+        if not pop_keys:
+            return False
+        return all(
+            (d.get("divert-keys") or {}).get(cid) == 1
+            for d in pop_keys
+            for cid in EMOJI_KEY_CIDS
+        )
+
+    @staticmethod
+    def _stop_solaar(timeout=5.0):
+        """Cierra Solaar y espera a que termine (y guarde su config) antes de seguir."""
+        subprocess.run(["killall", "-q", "solaar"], stderr=subprocess.DEVNULL)
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if subprocess.run(["pgrep", "-x", "solaar"], stdout=subprocess.DEVNULL).returncode != 0:
+                return
+            time.sleep(0.1)
+
+    @staticmethod
+    def _start_solaar():
+        try:
             subprocess.Popen(
                 ["solaar", "--window=hide"],
                 stdout=subprocess.DEVNULL,
@@ -462,9 +508,9 @@ class EmojiManagerWindow(Gtk.Window):
                 stdin=subprocess.DEVNULL,
                 start_new_session=True
             )
-            return True, "Solaar se ha recargado en segundo plano con las nuevas reglas activadas."
+            return True
         except Exception:
-            return True, "Reglas guardadas. Si Solaar está abierto, reinícialo para aplicar cambios."
+            return False
 
     def show_message(self, msg_type, title, text):
         dialog = Gtk.MessageDialog(
