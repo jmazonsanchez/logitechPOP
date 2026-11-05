@@ -95,6 +95,39 @@ El asistente te permitirá elegir:
 
 ---
 
+## 🔄 Actualización en Otros Equipos
+
+Si ya tienes el repositorio clonado e instalado en varios equipos (Laptop 1, Laptop 2, PC, etc.) y deseas aplicar los cambios más recientes:
+
+### 🐧 En Linux (Ubuntu, Debian, Fedora, Arch, etc.):
+
+Abre una terminal en la carpeta del repositorio y ejecuta:
+
+```bash
+git pull origin main
+./setup.sh --all
+```
+
+> [!TIP]
+> **¿Qué realiza `./setup.sh --all` al actualizar?**
+> * **Reinicia el demonio en segundo plano (`daemon.py`):** Detiene la instancia previa en ejecución e inicia la versión actualizada con las optimizaciones de latencia y el mini selector de emojis (Tecla 5).
+> * **Actualiza iconos y accesos directos:** Registra los nuevos logos SVG y PNGs multi-resolución en `~/.local/share/icons/` y actualiza la caché del entorno de escritorio.
+> * **Actualiza reglas de Solaar:** Aplica la configuración silenciosa (sin alertas `notify-send` en pantalla) de manera inmediata.
+
+### 🪟 En Windows:
+
+1. Abre **PowerShell** o **Git Bash** en la carpeta del repositorio:
+   ```powershell
+   git pull origin main
+   ```
+2. Ejecuta el script de instalación (o haz doble clic sobre él en el explorador de archivos):
+   ```cmd
+   windows\setup.bat
+   ```
+> Esto recompilará automáticamente el binario `LogiPop.exe`, actualizará la versión residente en `%APPDATA%\LogiPop\` y reiniciará el servicio en segundo plano.
+
+---
+
 ## 🗑️ Desinstalación
 
 Para revertir cualquier configuración o devolver el equipo al estado original:

@@ -175,7 +175,7 @@ El cambio coordinado más rápido y fiable se realiza mediante:
 * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd> ➔ Fuerza el cambio sincronizado a **Laptop 1**.
 * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>2</kbd> ➔ Fuerza el cambio sincronizado a **Laptop 2**.
 
-Este atajo ejecuta internamente `switch-host.sh` y el conmutador nativo `switch.py` (< 90ms), mostrando una notificación visual en pantalla confirmando la acción.
+Este atajo ejecuta internamente `switch-host.sh` y el conmutador nativo `switch.py` (< 90ms), realizando la conmutación de forma completamente silenciosa, limpia e inmediata.
 
 ---
 
