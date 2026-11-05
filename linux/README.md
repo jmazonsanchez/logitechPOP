@@ -13,8 +13,8 @@ Módulo de sincronización simultánea e instantánea (<90ms) para teclado **Log
    * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd> ➔ Canal 1 (Dispositivo 1)
    * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>2</kbd> ➔ Canal 2 (Dispositivo 2)
    * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>3</kbd> ➔ Canal 3 (Dispositivo 3)
-3. **Notificaciones Visuales (`switch-host.sh`):**
-   Envía una notificación en pantalla mediante `notify-send` con el canal y el icono correspondiente.
+3. **Conmutación Silenciosa e Inmediata:**
+   Cambio de periféricos en segundo plano de manera limpia, sin retrasos ni notificaciones intrusivas en pantalla.
 
 ---
 

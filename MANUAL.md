@@ -202,17 +202,14 @@ El archivo de reglas se encuentra en la carpeta `linux/rules.yaml`. Su estructur
 - Rule:
     - Key: [Host Switch Channel 1, released]
     - Set: ["Logi POP Mouse", change-host, 1]
-    - Execute: [notify-send, -i, input-mouse, "LogiPop Sync", "Mouse sincronizado al Canal 1"]
 ---
 - Rule:
     - Key: [Host Switch Channel 2, released]
     - Set: ["Logi POP Mouse", change-host, 2]
-    - Execute: [notify-send, -i, input-mouse, "LogiPop Sync", "Mouse sincronizado al Canal 2"]
 ---
 - Rule:
     - Key: [Host Switch Channel 3, released]
     - Set: ["Logi POP Mouse", change-host, 3]
-    - Execute: [notify-send, -i, input-mouse, "LogiPop Sync", "Mouse sincronizado al Canal 3"]
 ```
 
 ---

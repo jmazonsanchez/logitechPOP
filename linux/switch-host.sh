@@ -19,11 +19,6 @@ if [[ -n "$LABEL" ]]; then
     MSG="$MSG ($LABEL)"
 fi
 
-# Notificación visual en pantalla
-if command -v notify-send >/dev/null 2>&1; then
-    notify-send -i input-keyboard -t 2000 "LogiPop Sync" "$MSG..." || true
-fi
-
 echo "🔄 $MSG..."
 
 # Ejecutar el conmutador directo Python (evita bugs de Solaar CLI / D-Bus en Python 3.14)
