@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 emoji_manager.py - Gestor Gráfico para las Teclas de Emojis de Logitech POP Keys
-Interfaz gráfica nativa en GTK3 con logotipo LogiPop, paleta en matriz por tipo y diseño compacto.
+Interfaz gráfica nativa en GTK3 con catálogo completo de emojis de Unicode
+y nuevo logotipo oficial LogiPop vectorizado.
 """
 
 import os
@@ -20,6 +21,7 @@ import yaml
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
+gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -36,43 +38,107 @@ DEFAULT_EMOJIS = {
     "4": "🔥"
 }
 
-# Colección organizada en matrices de 8 columnas x 3 filas (24 emojis por pestaña)
+# Catálogo exhaustivo de Emojis de Unicode organizados por categorías completas
 EMOJI_CATEGORIES = {
     "😀 Caras": [
-        "😍", "😂", "😊", "🔥", "😭", "🥳", "🤔", "😎",
-        "🥰", "🤣", "🙄", "🥺", "😴", "😇", "🤯", "🤩",
-        "😜", "😬", "🤤", "🤫", "😏", "😱", "🤪", "💀"
+        "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃",
+        "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙",
+        "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔",
+        "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥",
+        "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮",
+        "🤧", "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "🥸", "😎",
+        "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺",
+        "😦", "😧", "😨", "😰", "😥", "😢", "😭", "😱", "😖", "😣",
+        "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬", "😈",
+        "👿", "💀", "☠️", "💩", "🤡", "👹", "👺", "👻", "👽", "🤖"
     ],
-    "👍 Gestos": [
-        "👍", "👏", "🙏", "✌️", "🤝", "👊", "💪", "👋",
-        "🤞", "👌", "🤘", "🤙", "👈", "👉", "✍️", "🙌",
-        "👀", "🤷", "🤦", "🫡", "💯", "🔥", "✨", "⚡"
+    "👍 Personas": [
+        "👋", "🤚", "🖐️", "✋", "🖖", "🫱", "🫲", "🫳", "🫴", "👌",
+        "🤌", "🤏", "✌️", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉",
+        "👆", "🖕", "👇", "☝️", "🫵", "👍", "👎", "✊", "👊", "🤛",
+        "🤜", "👏", "🙌", "🫶", "👐", "🤲", "🤝", "🙏", "✍️", "💅",
+        "🤳", "💪", "🦾", "🦿", "🦵", "🦶", "👂", "🦻", "👃", "🧠",
+        "🫀", "🫁", "🦷", "🦴", "👀", "👁️", "👅", "👄", "🫦", "👶",
+        "🧒", "👦", "👧", "🧑", "👱", "👨", "🧔", "👩", "🧓", "👴",
+        "👵", "🙍", "🙎", "🙅", "🙆", "💁", "🙋", "🧏", "🙇", "🤦",
+        "🤷", "👮", "🕵️", "💂", "🥷", "👷", "🤴", "👸", "👳", "👲"
     ],
-    "❤️ Símbolos": [
-        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
-        "💔", "❣️", "💕", "💞", "💓", "💗", "💖", "💘",
-        "⭐", "🌟", "💫", "✨", "💥", "💢", "💬", "💭"
+    "🐶 Animales": [
+        "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
+        "🦁", "🐮", "🐷", "🐽", "🐸", "🐵", "🙈", "🙉", "🙊", "🐒",
+        "🐔", "🐧", "🐦", "🐤", "🐣", "🐥", "🦆", "🦅", "🦉", "🦇",
+        "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜",
+        "🪰", "🪲", "🪳", "🦟", "🦗", "🕷️", "🕸️", "🦂", "🐢", "🐍",
+        "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠",
+        "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐆", "🐅", "🐃", "🐂",
+        "🐄", "🦌", "🐪", "🐫", "🦙", "🦒", "🐘", "🦏", "🦛", "🐁",
+        "🌲", "🌳", "🌴", "🌵", "🌾", "🌿", "☘️", "🍀", "🍁", "🍂"
     ],
-    "💼 Trabajo": [
-        "✅", "❌", "⚠️", "❓", "❗", "⏳", "📅", "💼",
-        "📊", "🔍", "📢", "🔔", "💡", "🚀", "💻", "📌",
-        "📝", "🔒", "🔑", "🎯", "🏆", "🎉", "☕", "🧠"
+    "🍕 Comida": [
+        "🍇", "🍈", "🍉", "🍊", "🍋", "🍌", "🍍", "🥭", "🍎", "🍏",
+        "🍐", "🍑", "🍒", "🍓", "🫐", "🥝", "🍅", "🫒", "🥥", "🥑",
+        "🍆", "🥔", "🥕", "🌽", "🌶️", "🫑", "🥒", "🥬", "🥦", "🧄",
+        "🧅", "🍄", "🥜", "🌰", "🍞", "🥐", "🥖", "🫓", "🥨", "🥯",
+        "🥞", "🧇", "🧀", "🍖", "🍗", "🥩", "🥓", "🍔", "🍟", "🍕",
+        "🌭", "🥪", "🌮", "🌯", "🫔", "🥙", "🧆", "🥚", "🍳", "🥘",
+        "🍲", "🫕", "🥣", "🥗", "🍿", "🧈", "🧂", "🥫", "🍱", "🍘",
+        "🍙", "🍚", "🍛", "🍜", "🍝", "🍠", "🍢", "🍣", "🍤", "🍥",
+        "🍦", "🍧", "🍨", "🍩", "🍪", "🎂", "🍰", "🧁", "🥧", "🍫",
+        "🍬", "🍭", "🍮", "🍯", "🍼", "🥛", "☕", "🫖", "🍵", "🍺"
     ],
-    "🎉 Festejo": [
-        "🎉", "🎊", "🎁", "🎈", "🍾", "🍻", "🍕", "🍔",
-        "🌮", "🍩", "🍦", "🍿", "🎸", "🎮", "🏖️", "✈️",
-        "🌈", "☀️", "☕", "🎂", "🥳", "💃", "🕺", "🔥"
+    "⚽ Deportes": [
+        "⚽", "⚾", "🥎", "🏀", "🏐", "🏈", "🏉", "🎾", "🥏", "🎳",
+        "🏏", "🏑", "🏒", "🥍", "🏓", "🏸", "🥊", "🥋", "🥅", "⛳",
+        "⛸️", "🎣", "🤿", "🎽", "🎿", "🛷", "🥌", "🎯", "🪀", "🪁",
+        "🎱", "🔮", "🪄", "🎮", "🕹️", "🎰", "🎲", "🧩", "🧸", "🪅",
+        "🪆", "🃏", "🀄", "🎭", "🎨", "🧵", "🪡", "🧶", "🎤", "🎧",
+        "📻", "🎷", "🪗", "🎸", "🎹", "🎺", "🎻", "🪕", "🥁", "🎬",
+        "🏹", "🛹", "🛼", "🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "🎫"
+    ],
+    "✈️ Viajes": [
+        "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️", "🚓", "🚑", "🚒", "🚐",
+        "🛻", "🚚", "🚛", "🚜", "🏍️", "🛵", "🚲", "🛴", "🚨", "🚔",
+        "🚍", "🚘", "🚖", "🚡", "🚠", "🚟", "🚃", "🚋", "🚞", "🚝",
+        "🚄", "🚅", "🚈", "🚂", "🚆", "🚇", "🚊", "🚉", "✈️", "🛫",
+        "🛬", "🛩️", "💺", "🛰️", "🚀", "🛸", "🚁", "🛶", "⛵", "🚤",
+        "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🛟", "⛽", "🚧", "🚦", "🚥",
+        "🗺️", "🗿", "🗽", "🗼", "🏰", "🏯", "🏟️", "🎡", "🎢", "🎠",
+        "⛱️", "🏖️", "🏝️", "🏜️", "🌋", "⛰️", "🏔️", "🏕️", "⛺", "🏠"
+    ],
+    "💡 Objetos": [
+        "⌚", "📱", "📲", "💻", "⌨️", "🖥️", "🖨️", "🖱️", "💾", "💿",
+        "📀", "📷", "📸", "📹", "🎥", "📽️", "🎞️", "📞", "☎️", "📟",
+        "📺", "📻", "🎙️", "🎚️", "🎛️", "⏱️", "⏲️", "⏰", "🕰️", "⌛",
+        "⏳", "📡", "🔋", "🪫", "🔌", "💡", "🔦", "🕯️", "🧯", "🗑️",
+        "💸", "💵", "💴", "💶", "💷", "🪙", "💰", "💳", "💎", "⚖️",
+        "🪜", "🧰", "🪛", "🔧", "🔨", "⚒️", "🛠️", "⛏️", "🪚", "🔩",
+        "⚙️", "⛓️", "🧲", "💣", "🧨", "🪓", "🔪", "🗡️", "⚔️", "🛡️",
+        "💊", "💉", "🩸", "🩹", "🩺", "🔑", "🗝️", "🚪", "📦", "📫",
+        "📄", "📑", "🧾", "📊", "📈", "📉", "📅", "📆", "📁", "📂",
+        "📚", "📖", "🔖", "🔗", "📎", "📌", "📍", "✂️", "📝", "✏️"
+    ],
+    "💖 Símbolos": [
+        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔",
+        "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "💟", "⭐",
+        "🌟", "💫", "✨", "💥", "💢", "💬", "💭", "💤", "💯", "🔥",
+        "⚡", "🌈", "☀️", "🌙", "☁️", "🌧️", "❄️", "☃️", "💧", "🌊",
+        "✅", "❌", "⚠️", "❓", "❗", "‼️", "⁉️", "⛔", "🚫", "🛑",
+        "♻️", "🌐", "🔔", "🔕", "📢", "📣", "🔒", "🔓", "🔏", "🔐",
+        "➡️", "⬅️", "⬆️", "⬇️", "↗️", "↘️", "↙️", "↖️", "↕️", "↔️",
+        "🔄", "🔁", "🔂", "▶️", "⏸️", "⏹️", "⏺️", "⏭️", "⏮️", "⏩",
+        "🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪", "🟤", "🔺",
+        "🔻", "🔸", "🔹", "🔶", "🔷", "🔳", "🔲", "🏁", "🚩", "🎌"
     ]
 }
 
 class EmojiManagerWindow(Gtk.Window):
     def __init__(self):
         super().__init__(title="LogiPop Emoji Studio")
-        self.set_default_size(600, 580)
+        self.set_default_size(630, 600)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_resizable(True)
 
-        # Cargar icono de ventana
+        # Cargar icono de ventana desde logipop.svg
         if os.path.exists(ICON_FILE):
             try:
                 self.set_icon_from_file(ICON_FILE)
@@ -94,21 +160,20 @@ class EmojiManagerWindow(Gtk.Window):
         scrolled.set_overlay_scrolling(True)
         self.add(scrolled)
 
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        main_box.set_border_width(16)
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        main_box.set_border_width(14)
         scrolled.add(main_box)
 
         # ======================================================================
-        # 1. Encabezado con Logotipo LogiPop
+        # 1. Encabezado con el Nuevo Logotipo Oficial LogiPop
         # ======================================================================
         header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
         header_box.set_halign(Gtk.Align.CENTER)
-        header_box.set_margin_bottom(4)
+        header_box.set_margin_bottom(2)
 
-        # Icono SVG de LogiPop
         if os.path.exists(ICON_FILE):
             try:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(ICON_FILE, 46, 46, True)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(ICON_FILE, 48, 48, True)
                 logo_img = Gtk.Image.new_from_pixbuf(pixbuf)
                 header_box.pack_start(logo_img, False, False, 0)
             except Exception:
@@ -116,7 +181,6 @@ class EmojiManagerWindow(Gtk.Window):
 
         title_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
 
-        # Logo Tipográfico: logi POP STUDIO
         logo_label = Gtk.Label()
         logo_label.set_markup(
             "<span font_desc='Ubuntu, Cantarell, Sans Bold 20' color='#1E1E24'>logi</span>"
@@ -126,7 +190,7 @@ class EmojiManagerWindow(Gtk.Window):
         logo_label.set_xalign(0)
 
         subtitle_label = Gtk.Label()
-        subtitle_label.set_markup("<span size='small' color='#666'>Configurador de teclas mecánicas de emojis para Logitech POP Keys</span>")
+        subtitle_label.set_markup("<span size='small' color='#666'>Configurador de teclas de emojis para Logitech POP Keys (Linux)</span>")
         subtitle_label.set_xalign(0)
 
         title_vbox.pack_start(logo_label, False, False, 0)
@@ -142,14 +206,14 @@ class EmojiManagerWindow(Gtk.Window):
         keys_frame.get_style_context().add_class("keys-frame")
 
         keys_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        keys_box.set_border_width(10)
+        keys_box.set_border_width(8)
         keys_box.set_homogeneous(True)
 
         key_meta = [
-            ("1", "Tecla 1", "Superior (Heart Eyes)", self.emojis.get("1", "😍")),
-            ("2", "Tecla 2", "Media 1 (Crying)", self.emojis.get("2", "😂")),
-            ("3", "Tecla 3", "Media 2 (Smiley)", self.emojis.get("3", "😊")),
-            ("4", "Tecla 4", "Inferior (Tears/Fire)", self.emojis.get("4", "🔥")),
+            ("1", "Tecla 1", "Superior", self.emojis.get("1", "😍")),
+            ("2", "Tecla 2", "Media 1", self.emojis.get("2", "😂")),
+            ("3", "Tecla 3", "Media 2", self.emojis.get("3", "😊")),
+            ("4", "Tecla 4", "Inferior", self.emojis.get("4", "🔥")),
         ]
 
         for idx, title, subtitle, val in key_meta:
@@ -195,27 +259,33 @@ class EmojiManagerWindow(Gtk.Window):
         main_box.pack_start(keys_frame, False, False, 0)
 
         # ======================================================================
-        # 3. Paleta de Emojis en MATRIZ 2D por Categoría (8 Columnas x 3 Filas)
+        # 3. Catálogo Completo de Emojis en Matriz Scrollable (10 Columnas)
         # ======================================================================
-        palette_frame = Gtk.Frame(label=" Catálogo de Emojis en Matriz (Haz clic en un emoji para asignarlo a la tecla activa) ")
+        palette_frame = Gtk.Frame(label=" Catálogo Completo de Emojis (Haz clic en un emoji para asignarlo a la tecla activa) ")
         palette_frame.get_style_context().add_class("palette-frame")
 
         notebook = Gtk.Notebook()
         notebook.get_style_context().add_class("palette-notebook")
+        notebook.set_scrollable(True)
 
         for cat_name, emoji_list in EMOJI_CATEGORIES.items():
-            # Matriz Gtk.Grid para distribución simétrica 8x3
-            grid = Gtk.Grid()
-            grid.set_column_spacing(6)
-            grid.set_row_spacing(6)
-            grid.set_halign(Gtk.Align.CENTER)
-            grid.set_valign(Gtk.Align.CENTER)
-            grid.set_border_width(10)
+            # Contenedor con scroll interno para cada categoría
+            cat_scroll = Gtk.ScrolledWindow()
+            cat_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+            cat_scroll.set_min_content_height(180)
+            cat_scroll.set_max_content_height(190)
 
-            cols = 8
+            grid = Gtk.Grid()
+            grid.set_column_spacing(4)
+            grid.set_row_spacing(4)
+            grid.set_halign(Gtk.Align.CENTER)
+            grid.set_valign(Gtk.Align.START)
+            grid.set_border_width(8)
+
+            cols = 10
             for i, em in enumerate(emoji_list):
                 btn = Gtk.Button(label=em)
-                btn.set_size_request(38, 38)
+                btn.set_size_request(36, 36)
                 btn.get_style_context().add_class("palette-emoji-btn")
                 btn.set_tooltip_text(f"Asignar {em} a la tecla activa")
                 btn.connect("clicked", self.on_quick_emoji_selected, em)
@@ -224,8 +294,9 @@ class EmojiManagerWindow(Gtk.Window):
                 row = i // cols
                 grid.attach(btn, col, row, 1, 1)
 
+            cat_scroll.add(grid)
             tab_lbl = Gtk.Label(label=cat_name)
-            notebook.append_page(grid, tab_lbl)
+            notebook.append_page(cat_scroll, tab_lbl)
 
         palette_frame.add(notebook)
         main_box.pack_start(palette_frame, False, False, 0)
@@ -260,7 +331,7 @@ class EmojiManagerWindow(Gtk.Window):
         # 5. Barra Inferior de Acciones
         # ======================================================================
         btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        btn_box.set_margin_top(4)
+        btn_box.set_margin_top(2)
 
         reset_btn = Gtk.Button(label="↺ Valores por Defecto")
         reset_btn.get_style_context().add_class("reset-btn")
@@ -486,7 +557,7 @@ class EmojiManagerWindow(Gtk.Window):
         }
         .palette-emoji-btn {
             font-size: 18px;
-            padding: 2px;
+            padding: 0;
             margin: 0;
             border-radius: 6px;
             background-color: #ffffff;
