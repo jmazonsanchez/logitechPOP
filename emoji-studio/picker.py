@@ -16,7 +16,11 @@ if not sys.platform.startswith("linux"):
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk, Pango
+from gi.repository import Gtk, Gdk, Pango, GLib
+
+GLib.set_prgname("logipop-emojis")
+GLib.set_application_name("LogiPop Emoji Picker")
+Gtk.Window.set_default_icon_name("logipop")
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ICON_FILE = os.path.join(SCRIPT_DIR, "logipop.svg")
@@ -49,6 +53,7 @@ class MiniEmojiPicker(Gtk.Window):
         self.set_skip_taskbar_hint(True)
         self.set_skip_pager_hint(True)
 
+        self.set_icon_name("logipop")
         if os.path.exists(ICON_FILE):
             try:
                 self.set_icon_from_file(ICON_FILE)

@@ -23,7 +23,17 @@ if [[ -f "$DAEMON_AUTOSTART" ]]; then
     echo "✔ Inicio automático del demonio eliminado ($DAEMON_AUTOSTART)."
 fi
 
-# 2. Detener proceso demonio
+# 2. Remover iconos del tema del sistema
+ICON_THEME_DIR="$HOME/.local/share/icons/hicolor"
+rm -f "$ICON_THEME_DIR/scalable/apps/logipop.svg"
+for sz in 256 128 64 48; do
+    rm -f "$ICON_THEME_DIR/${sz}x${sz}/apps/logipop.png"
+done
+gtk-update-icon-cache -f -t "$ICON_THEME_DIR" >/dev/null 2>&1 || true
+update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
+echo "✔ Iconos de 'logipop' removidos del tema del sistema."
+
+# 3. Detener proceso demonio
 pkill -f "emoji-studio/daemon.py" || true
 rm -f /run/user/*/logipop_emoji_*.sock /tmp/logipop_emoji_*.sock 2>/dev/null || true
 echo "✔ Demonio detenido."

@@ -24,6 +24,11 @@ gi.require_version("Gdk", "3.0")
 gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
+# Identificador de aplicación para Wayland, GNOME Shell, Dock y gestores de ventanas
+GLib.set_prgname("logipop-emojis")
+GLib.set_application_name("LogiPop Emoji Studio")
+Gtk.Window.set_default_icon_name("logipop")
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(SCRIPT_DIR, "emojis.json")
 ICON_FILE = os.path.join(SCRIPT_DIR, "logipop.svg")
@@ -49,7 +54,8 @@ class EmojiManagerWindow(Gtk.Window):
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_resizable(True)
 
-        # Cargar icono de ventana desde logipop.svg
+        # Cargar icono de ventana
+        self.set_icon_name("logipop")
         if os.path.exists(ICON_FILE):
             try:
                 self.set_icon_from_file(ICON_FILE)
