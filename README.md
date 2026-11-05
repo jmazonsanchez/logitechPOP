@@ -28,9 +28,15 @@ LogiPop/
 │   ├── switch.ps1
 │   └── README.md
 │
-├── emoji-studio/       # 😃 Mini app gráfica GTK3 para Emojis (Exclusivo para Linux)
+├── emoji-studio/       # 😃 Suite gráfica GTK3 para Emojis (Exclusivo para Linux)
 │   ├── emoji_manager.py
+│   ├── picker.py
+│   ├── daemon.py
+│   ├── send_emoji.sh
 │   ├── send_emoji.py
+│   ├── catalog.py
+│   ├── theme.py
+│   ├── logipop.svg
 │   ├── emojis.default.json
 │   ├── setup.sh
 │   ├── uninstall.sh
@@ -68,12 +74,14 @@ Permite alternar entre hasta 3 computadoras de forma **simultánea y coordinada*
 > **¿Por qué es exclusivo para Linux?**
 > En Windows y macOS, Logitech ofrece soporte oficial para las teclas de emojis mediante *Logi Options+*. Sin embargo, **en Linux no existe software oficial**, dejando estas teclas completamente inactivas por defecto. **LogiPop Emoji Studio** solventa exclusivamente esta carencia para distribuciones Linux.
 
-Mini aplicación gráfica nativa en **GTK3** para personalizar los 4 botones mecánicos de emojis del lateral derecho del **Logitech POP Keys** y configurar la 5ta tecla (selector general del sistema operativo):
+Mini aplicación gráfica nativa en **GTK3** para personalizar los 4 botones mecánicos de emojis del lateral derecho del **Logitech POP Keys** y gestionar la 5ta tecla:
 
-* **4 Teclas Personalizables:** Asigna cualquier emoji con un solo clic desde la paleta por categorías (*Expresiones*, *Gestos*, *Símbolos*, *Trabajo*) o escribe cualquier carácter Unicode.
-* **Tecla 5 (Selector Global):** Abre el buscador de emojis nativo del sistema (<kbd>Super</kbd> + <kbd>.</kbd> / <kbd>Ctrl</kbd> + <kbd>.</kbd>).
+* **4 Teclas Personalizables:** Asigna cualquier emoji con un solo clic desde la paleta de 8 categorías completas (+650 emojis Unicode estándar) o escribe cualquier carácter personalizado.
+* **Tecla 5 (Mini Selector Flotante):** Despliega una ventana emergente interactiva con biblioteca organizada por categorías, buscador en tiempo real y pegado automático inmediato en tu editor o campo de texto previo.
+* **Modo Oscuro / Claro Automático:** Interfaz adaptativa que detecta en tiempo real las preferencias visuales del sistema operativo (GNOME Dark/Light Mode).
+* **Latencia Ultrarrápida (<25ms):** Inserción instantánea mediante demonio de teclado virtual persistente (`/dev/uinput`) y socket UNIX local.
 * **Integración Solaar Automática:** Desvía las teclas y configura las reglas del daemon en segundo plano con solo presionar **"💾 Guardar y Aplicar al Teclado"**.
-* **Acceso Directo de Escritorio:** Disponible en el menú de aplicaciones de Ubuntu.
+* **Acceso Directo e Icono Oficial:** Disponible en el dock y menú de aplicaciones de GNOME con logo oficial vectorizado.
 
 Para más detalles, consulta [**`emoji-studio/README.md`**](emoji-studio/README.md).
 

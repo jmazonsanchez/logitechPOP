@@ -222,15 +222,17 @@ El teclado Logitech POP Keys cuenta con 5 teclas dedicadas en el borde lateral d
 El proyecto incluye una aplicación gráfica nativa llamada **LogiPop Emoji Studio** (`emoji_manager.py`) diseñada para gestionar estas teclas de manera visual:
 
 #### Funcionalidades de la aplicación:
-1. **Asignación rápida de emojis:** Cuenta con 4 pestañas de selección rápida (*Expresiones*, *Gestos*, *Símbolos*, *Trabajo*). Haz clic en cualquier tecla de la ventana y luego en el emoji deseado de la paleta.
+1. **Asignación rápida de emojis:** Cuenta con 8 pestañas temáticas con más de 650 emojis Unicode (*Caras y Emociones*, *Gestos y Personas*, *Animales y Naturaleza*, *Comida y Bebida*, *Actividades*, *Viajes*, *Objetos*, *Símbolos y Banderas*). Haz clic en cualquier tecla de la ventana y luego en el emoji deseado de la paleta.
 2. **Compatibilidad Unicode total:** Puedes escribir directamente cualquier emoji compuesto, bandera o símbolo especial en las casillas.
 3. **Botón de prueba integrado (`📋 Probar`):** Permite verificar la inyección del emoji en tiempo real sin requerir pulsar físicamente la tecla del teclado.
-4. **Soporte para el Selector General de Emojis:** La 5ta tecla está vinculada al selector del sistema operativo mediante el atajo nativo (<kbd>Super</kbd> + <kbd>.</kbd> / <kbd>Ctrl</kbd> + <kbd>.</kbd>).
-5. **Aplicación automática a Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación:
+4. **Mini Selector Flotante (Tecla 5):** Al pulsar la 5ta tecla, se despliega una ventana emergente interactiva con biblioteca categorizada, barra de búsqueda instantánea y auto-pegado al hacer clic sobre un emoji. Se cierra con <kbd>Esc</kbd> o pulsando la tecla 5 nuevamente (toggle).
+5. **Modo Oscuro / Claro Automático:** Adapta su interfaz visual dinámicamente según la preferencia de color del escritorio GNOME.
+6. **Inyección Ultrarrápida (<25ms):** La pulsación se comunica mediante `send_emoji.sh` (<3ms) a través de un socket UNIX al demonio `daemon.py`, el cual utiliza un teclado virtual persistente `/dev/uinput` y copia atómica en el portapapeles.
+7. **Aplicación automática a Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación:
    * Guarda los emojis en `emojis.json` (configuración local; cada instalación parte de los valores de `emojis.default.json`).
    * Actualiza el parámetro `divert-keys` en `~/.config/solaar/config.yaml` asignando el valor `1` (Diverted) a las teclas 260, 261, 262, 263 y 264.
-   * Genera las reglas en `~/.config/solaar/rules.yaml` vinculando cada pulsación con `send_emoji.py`.
-   * Reinicia el demonio Solaar en segundo plano para que los cambios surtan efecto de inmediato.
+   * Genera las reglas en `~/.config/solaar/rules.yaml` vinculando cada pulsación con `send_emoji.sh`.
+   * Notifica al demonio en memoria de forma instantánea sin lentos reinicios del servicio.
 
 #### Cómo abrir la aplicación:
 * Desde el menú de aplicaciones de tu escritorio GNOME buscando **"LogiPop Emoji Studio"**.

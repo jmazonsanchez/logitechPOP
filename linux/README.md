@@ -46,7 +46,7 @@ cd linux
 ## 📂 Archivos del Módulo
 
 * [`switch.py`](switch.py): Script en Python que interactúa directamente con `/dev/hidraw` enviando el paquete HID++.
-* [`switch-host.sh`](switch-host.sh): Envoltorio bash que ejecuta `switch.py` y dispara las notificaciones OSD.
+* [`switch-host.sh`](switch-host.sh): Envoltorio bash que ejecuta `switch.py` de forma limpia y silenciosa.
 * [`configure-shortcuts.sh`](configure-shortcuts.sh): Registra o actualiza los 3 atajos globales en `gsettings`.
 * [`rules.yaml`](rules.yaml): Reglas de automatización para Solaar.
 * [`setup.sh`](setup.sh): Instalador desatendido / interactivo.

@@ -11,25 +11,28 @@ Aplicación gráfica nativa (GTK3) y motor de inyección de emojis para el tecla
 
 El teclado Logitech POP Keys cuenta con 5 teclas dedicadas en su lateral derecho:
 * **4 Teclas Físicas Personalizables** (IDs 260 al 263: *Heart Eyes*, *Crying*, *Smiley*, *Fire/Tears*).
-* **1 Tecla de Menú de Emojis** (ID 264: abre el selector completo de emojis de todo el sistema).
+* **1 Tecla de Menú de Emojis** (ID 264: abre el mini selector completo con categorías, buscador y auto-pegado).
 
 ```
  ┌───┐ ──> Tecla 1: [ 😍 ] (Personalizable)
  │   │ ──> Tecla 2: [ 😂 ] (Personalizable)
  │   │ ──> Tecla 3: [ 😊 ] (Personalizable)
  │   │ ──> Tecla 4: [ 🔥 ] (Personalizable)
- └───┘ ──> Tecla 5: [ 🌐 ] (Selector Completo de GNOME: Super + .)
+ └───┘ ──> Tecla 5: [ 🎛️ ] (Mini Selector Flotante: Categorías + Búsqueda + Auto-pegado)
 ```
 
 ---
 
 ## ✨ Características
 
-1. **Paleta Rápida por Categorías:** Pestañas interactivas con decenas de emojis organizados en *Expresiones*, *Gestos*, *Símbolos* y *Trabajo*.
-2. **Entrada Libre de Texto:** Soporta cualquier carácter o símbolo Unicode, banderas y combinaciones.
-3. **Prueba en Vivo (`📋 Probar`):** Cada casilla tiene un botón de prueba directa para verificar la inyección inmediata en cualquier aplicación en foco sin tocar el teclado.
-4. **Tecla 5 (Selector Global):** Vinculada al atajo de sistema (<kbd>Super</kbd> + <kbd>.</kbd> / <kbd>Ctrl</kbd> + <kbd>.</kbd>).
-5. **Integración Transparente con Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación desvía (*divert*) las teclas en el hardware, genera las reglas en `~/.config/solaar/rules.yaml` y recarga Solaar en segundo plano.
+1. **Paleta Rápida por 8 Categorías:** Más de 650 emojis estándar organizados en pestañas temáticas (*Caras y Emociones*, *Gestos y Personas*, *Animales y Naturaleza*, *Comida y Bebida*, *Actividades*, *Viajes*, *Objetos*, *Símbolos y Banderas*).
+2. **Entrada Libre de Texto:** Soporta cualquier carácter o símbolo Unicode, banderas y combinaciones especiales.
+3. **Tecla 5 (Mini Selector Flotante):** Despliega al instante una ventana emergente interactiva con biblioteca categorizada, filtro de búsqueda en tiempo real y auto-pegado inmediato en la aplicación previa. Se puede cerrar en cualquier momento con <kbd>Esc</kbd> o pulsando de nuevo la Tecla 5 (toggle).
+4. **Modo Oscuro / Claro Automático:** Detecta en tiempo real la preferencia de tema del sistema (GNOME Dark/Light Mode) y adapta los estilos visuales de la interfaz.
+5. **Inyección Ultrarrápida (<25ms):** La pulsación física se transmite mediante un script POSIX (`send_emoji.sh`) a través de un socket UNIX a un demonio persistente (`daemon.py`), el cual simula `Ctrl+V` mediante el teclado virtual del kernel `/dev/uinput` sin demoras perceptibles.
+6. **Prueba en Vivo (`📋 Probar`):** Cada casilla tiene un botón de prueba directa para verificar la inyección inmediata en cualquier aplicación en foco sin tocar el teclado.
+7. **Integración Transparente con Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación desvía (*divert*) las teclas en el hardware, genera las reglas en `~/.config/solaar/rules.yaml` y notifica al demonio en memoria sin demoras.
+8. **Iconos Nativos en el Sistema:** Instala iconos vectoriales SVG y mapas de bits PNG multi-resolución en `~/.local/share/icons/hicolor` para una integración visual limpia en el dock y menú de aplicaciones.
 
 ---
 
@@ -65,11 +68,16 @@ cd emoji-studio
 
 ## 📂 Archivos del Módulo
 
-* [`emoji_manager.py`](emoji_manager.py): Interfaz gráfica GTK3 con paleta de emojis y asistente de integración.
-* [`daemon.py`](daemon.py): Demonio en segundo plano con teclado virtual persistente (`/dev/uinput`) e inyector rápido.
-* [`send_emoji.py`](send_emoji.py): Disparador rápido invocado por Solaar para comunicar la pulsación al demonio.
-* [`emojis.default.json`](emojis.default.json): Emojis por defecto (😍 😂 😊 🔥) que el instalador aplica en cada instalación.
-* `emojis.json`: Configuración local de los 4 emojis (la crea el instalador y la actualiza la app; no se versiona).
-* [`bin/wl-copy`](bin/): Binario independiente de gestión de portapapeles para Wayland.
-* [`setup.sh`](setup.sh): Instalador del lanzador `.desktop`, demonio autostart e integración con Solaar.
-* [`uninstall.sh`](uninstall.sh): Desinstalador limpio.
+* [`emoji_manager.py`](emoji_manager.py): Aplicación gráfica GTK3 con catálogo de emojis, editor de teclas y asistente de integración.
+* [`picker.py`](picker.py): Mini selector flotante emergente con catálogo categorizado, buscador en vivo y auto-pegado.
+* [`catalog.py`](catalog.py): Catálogo centralizado con más de 650 emojis organizados por categorías.
+* [`theme.py`](theme.py): Gestor de temas claro/oscuro adaptativo para GNOME y Wayland.
+* [`daemon.py`](daemon.py): Demonio en segundo plano con teclado virtual persistente (`/dev/uinput`), caché en memoria y socket UNIX.
+* [`send_emoji.sh`](send_emoji.sh): Disparador POSIX ultrarrápido (<3ms) ejecutado por Solaar para comunicar la pulsación al socket UNIX.
+* [`send_emoji.py`](send_emoji.py): Disparador alternativo en Python (respaldo).
+* [`logipop.svg`](logipop.svg): Logotipo oficial vectorizado del proyecto.
+* [`emojis.default.json`](emojis.default.json): Configuración inicial por defecto (😍 😂 😊 🔥).
+* `emojis.json`: Archivo de configuración local generado por la aplicación (ignorado en git).
+* [`bin/wl-copy`](bin/): Binario independiente de gestión de portapapeles para entornos Wayland.
+* [`setup.sh`](setup.sh): Instalador de iconos, lanzador `.desktop`, servicio de autostart y reglas de Solaar.
+* [`uninstall.sh`](uninstall.sh): Desinstalador limpio para revertir todas las configuraciones.
