@@ -370,8 +370,8 @@ class EmojiManagerWindow(Gtk.Window):
             self.emojis[self.selected_key_idx] = emoji_char
 
     def on_test_key_clicked(self, widget, idx):
-        send_script = os.path.join(SCRIPT_DIR, "send_emoji.py")
-        subprocess.Popen(["python3", send_script, str(idx)])
+        send_script = os.path.join(SCRIPT_DIR, "send_emoji.sh")
+        subprocess.Popen([send_script, str(idx)])
 
     def on_reset_clicked(self, widget):
         for idx, val in DEFAULT_EMOJIS.items():
@@ -415,7 +415,7 @@ class EmojiManagerWindow(Gtk.Window):
 
     def apply_solaar_integration(self):
         os.makedirs(SOLAAR_CONFIG_DIR, exist_ok=True)
-        send_script = os.path.join(SCRIPT_DIR, "send_emoji.py")
+        send_script = os.path.join(SCRIPT_DIR, "send_emoji.sh")
 
         # A. Actualizar config.yaml para activar divert-keys en POP Keys
         try:
@@ -467,11 +467,11 @@ class EmojiManagerWindow(Gtk.Window):
                 existing_rules = []
 
         new_emoji_rules = [
-            [{"Key": ["Emoji Smiley Heart Eyes", "pressed"]}, {"Execute": ["python3", send_script, "1"]}],
-            [{"Key": ["Emoji Crying Face", "pressed"]}, {"Execute": ["python3", send_script, "2"]}],
-            [{"Key": ["Emoji Smiley", "pressed"]}, {"Execute": ["python3", send_script, "3"]}],
-            [{"Key": ["Emoji Smilie With Tears", "pressed"]}, {"Execute": ["python3", send_script, "4"]}],
-            [{"Key": ["Emoji", "pressed"]}, {"Execute": ["python3", send_script, "5"]}],
+            [{"Key": ["Emoji Smiley Heart Eyes", "pressed"]}, {"Execute": [send_script, "1"]}],
+            [{"Key": ["Emoji Crying Face", "pressed"]}, {"Execute": [send_script, "2"]}],
+            [{"Key": ["Emoji Smiley", "pressed"]}, {"Execute": [send_script, "3"]}],
+            [{"Key": ["Emoji Smilie With Tears", "pressed"]}, {"Execute": [send_script, "4"]}],
+            [{"Key": ["Emoji", "pressed"]}, {"Execute": [send_script, "5"]}],
         ]
 
         all_rules = existing_rules + new_emoji_rules

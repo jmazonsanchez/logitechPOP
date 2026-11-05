@@ -59,7 +59,6 @@ def main():
     if sock:
         try:
             sock.sendall(key_idx.encode("utf-8"))
-            sock.recv(16)
         finally:
             sock.close()
 

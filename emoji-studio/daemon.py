@@ -28,26 +28,36 @@ DEFAULT_EMOJIS = {
     "4": "🔥"
 }
 
+_cached_emojis = None
+_cached_mtime = 0
+
 def get_socket_path():
     runtime_dir = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
     return os.path.join(runtime_dir, f"logipop_emoji_{os.getuid()}.sock")
 
 def load_emojis():
-    emojis = DEFAULT_EMOJIS.copy()
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                emojis.update(json.load(f))
-        except Exception:
-            pass
-    return emojis
+    """Carga configuración con caché en memoria basado en mtime para latencia 0."""
+    global _cached_emojis, _cached_mtime
+    if not os.path.exists(CONFIG_FILE):
+        return DEFAULT_EMOJIS.copy()
+
+    try:
+        mtime = os.path.getmtime(CONFIG_FILE)
+        if _cached_emojis is not None and mtime == _cached_mtime:
+            return _cached_emojis
+
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+            emojis = {**DEFAULT_EMOJIS, **cfg}
+            _cached_emojis = emojis
+            _cached_mtime = mtime
+            return emojis
+    except Exception:
+        return _cached_emojis or DEFAULT_EMOJIS.copy()
 
 def copy_to_clipboard(text: str) -> bool:
     """Copia texto al portapapeles de forma sincrónica y nativa en Wayland/X11."""
     # 1. Prioridad: wl-copy local o del sistema en Wayland
-    # NOTA CRÍTICA: subprocess.run() síncrono garantiza que el compositor de Wayland
-    # haya completado el handshake de selección antes de disparar la pulsación virtual de Ctrl+V.
-    # El parámetro '-n' evita añadir un salto de línea indebido al emoji.
     wl_bin = WL_COPY_BIN if os.path.isfile(WL_COPY_BIN) and os.access(WL_COPY_BIN, os.X_OK) else "wl-copy"
     try:
         subprocess.run(
@@ -112,62 +122,72 @@ def main():
     # Crear servidor socket UNIX
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(socket_path)
-    server.listen(5)
+    server.listen(10)
     os.chmod(socket_path, 0o600)
 
-    print("LogiPop Daemon iniciado y listo para recibir peticiones.")
+    # Estado del portapapeles y pre-calentamiento
+    current_clipboard_emoji = None
+    try:
+        init_emojis = load_emojis()
+        primary_emoji = init_emojis.get("1", "🔥")
+        copy_to_clipboard(primary_emoji)
+        current_clipboard_emoji = primary_emoji
+    except Exception:
+        pass
+
+    print("LogiPop Daemon ultrarrápido iniciado y listo.")
 
     try:
         while True:
             conn, _ = server.accept()
             try:
                 data = conn.recv(64).decode("utf-8").strip()
-                if not data:
-                    conn.close()
-                    continue
-
-                if data == "5":
-                    # Selector de emojis de GNOME: Super + .
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
-                    ui.syn()
-                    time.sleep(0.02)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 1)
-                    ui.syn()
-                    time.sleep(0.04)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 0)
-                    ui.syn()
-                    time.sleep(0.02)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
-                    ui.syn()
-                elif data in ["1", "2", "3", "4"]:
-                    emojis = load_emojis()
-                    target_emoji = emojis.get(data, "😊")
-
-                    # 1. Copiar al portapapeles de forma sincrónica y limpia
-                    copy_to_clipboard(target_emoji)
-
-                    # Pausa breve de estabilización para el compositor
-                    time.sleep(0.03)
-
-                    # 2. Simular Ctrl + V de forma secuencial y separada para que el
-                    # compositor registre el estado del modificador antes del carácter
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
-                    ui.syn()
-                    time.sleep(0.02)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
-                    ui.syn()
-                    time.sleep(0.04)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
-                    ui.syn()
-                    time.sleep(0.02)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
-                    ui.syn()
-
-                conn.sendall(b"OK\n")
-            except Exception as e:
-                pass
+            except Exception:
+                data = ""
             finally:
-                conn.close()
+                # Cierre inmediato de la conexión para liberar al cliente en < 1ms
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+            if not data:
+                continue
+
+            if data == "5":
+                # Selector de emojis de GNOME: Super + . (latencia mínima ~25ms)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
+                ui.syn()
+                time.sleep(0.005)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 1)
+                ui.syn()
+                time.sleep(0.015)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 0)
+                ui.syn()
+                time.sleep(0.005)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
+                ui.syn()
+            elif data in ["1", "2", "3", "4"]:
+                emojis = load_emojis()
+                target_emoji = emojis.get(data, "😊")
+
+                # Si el emoji solicitado ya está en el portapapeles, omitir wl-copy (0ms)
+                if target_emoji != current_clipboard_emoji:
+                    copy_to_clipboard(target_emoji)
+                    current_clipboard_emoji = target_emoji
+
+                # Simulación de Ctrl + V de alta respuesta (~22ms)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
+                ui.syn()
+                time.sleep(0.005)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
+                ui.syn()
+                time.sleep(0.012)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
+                ui.syn()
+                time.sleep(0.005)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
+                ui.syn()
     except KeyboardInterrupt:
         pass
     finally:
