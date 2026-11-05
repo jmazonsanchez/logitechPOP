@@ -20,7 +20,7 @@ echo "=========================================================="
 echo ""
 
 # 1. Permisos de ejecución
-chmod +x "$SCRIPT_DIR/emoji_manager.py" "$SCRIPT_DIR/send_emoji.py" "$SCRIPT_DIR/send_emoji.sh" "$SCRIPT_DIR/daemon.py" "$SCRIPT_DIR/bin/wl-copy" "$SCRIPT_DIR/bin/wl-paste"
+chmod +x "$SCRIPT_DIR/emoji_manager.py" "$SCRIPT_DIR/send_emoji.py" "$SCRIPT_DIR/send_emoji.sh" "$SCRIPT_DIR/daemon.py" "$SCRIPT_DIR/picker.py" "$SCRIPT_DIR/bin/wl-copy" "$SCRIPT_DIR/bin/wl-paste"
 echo "✔ Permisos asignados a los scripts y binarios de Emoji Studio."
 
 # 2. Instalar lanzador de escritorio .desktop

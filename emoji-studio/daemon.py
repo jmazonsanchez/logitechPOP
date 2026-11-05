@@ -172,18 +172,39 @@ def main():
                 continue
 
             if data == "5":
-                # Selector de emojis de GNOME: Super + . (latencia mínima ~25ms)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
-                ui.syn()
-                time.sleep(0.005)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 1)
-                ui.syn()
-                time.sleep(0.015)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 0)
-                ui.syn()
-                time.sleep(0.005)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
-                ui.syn()
+                # Selector Mini Flotante de LogiPop (Tecla 5)
+                # Si ya está abierto, se cierra (comportamiento toggle); si no, se despliega
+                picker_script = os.path.join(SCRIPT_DIR, "picker.py")
+                try:
+                    res = subprocess.run(["pgrep", "-f", "picker.py"], capture_output=True, text=True)
+                    if res.stdout.strip():
+                        subprocess.run(["pkill", "-f", "picker.py"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    else:
+                        subprocess.Popen(["python3", picker_script], start_new_session=True)
+                except Exception:
+                    subprocess.Popen(["python3", picker_script], start_new_session=True)
+
+            elif data.startswith("paste:"):
+                target_emoji = data[6:].strip()
+                if target_emoji:
+                    # Pausa breve (~70ms) para que GNOME Mutter devuelva el foco a la ventana anterior
+                    time.sleep(0.07)
+                    copy_to_clipboard(target_emoji)
+                    last_emoji = target_emoji
+                    last_paste_time = time.time()
+
+                    # Simular Ctrl + V para insertar en la ventana activa previa
+                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
+                    ui.syn()
+                    time.sleep(0.005)
+                    ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
+                    ui.syn()
+                    time.sleep(0.012)
+                    ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
+                    ui.syn()
+                    time.sleep(0.005)
+                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
+                    ui.syn()
             elif data in ["1", "2", "3", "4"]:
                 emojis = load_emojis()
                 target_emoji = emojis.get(data, "😊")
