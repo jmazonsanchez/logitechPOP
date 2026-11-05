@@ -398,10 +398,17 @@ class EmojiManagerWindow(Gtk.Window):
             self.show_message(Gtk.MessageType.ERROR, "Error al guardar", f"No se pudo guardar la configuración: {e}")
             return
 
-        # 2. Configurar Solaar divert-keys y rules.yaml
+        # 2. Notificar inmediatamente al demonio para pre-calentar el portapapeles (< 2ms)
+        send_script = os.path.join(SCRIPT_DIR, "send_emoji.sh")
+        try:
+            subprocess.run([send_script, "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
+        # 3. Configurar Solaar divert-keys y rules.yaml (solo reinicia si es primera vez)
         solaar_ok, solaar_msg = self.apply_solaar_integration()
 
-        # 3. Mostrar confirmación
+        # 4. Mostrar confirmación
         summary_text = (
             f"<b>¡Configuración guardada exitosamente!</b>\n\n"
             f"• Tecla 1: {new_config['1']}\n"
@@ -416,6 +423,21 @@ class EmojiManagerWindow(Gtk.Window):
     def apply_solaar_integration(self):
         os.makedirs(SOLAAR_CONFIG_DIR, exist_ok=True)
         send_script = os.path.join(SCRIPT_DIR, "send_emoji.sh")
+
+        # Verificar si las reglas ya están instaladas
+        rules_already_installed = False
+        if os.path.exists(SOLAAR_RULES_FILE):
+            try:
+                with open(SOLAAR_RULES_FILE, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    if send_script in content or "send_emoji" in content:
+                        rules_already_installed = True
+            except Exception:
+                pass
+
+        # Si ya están vinculadas, NO reiniciar Solaar para evitar demoras de conexión de hardware
+        if rules_already_installed:
+            return True, "⚡ Aplicado instantáneamente. El teclado mantiene su conexión activa sin demoras."
 
         # A. Actualizar config.yaml para activar divert-keys en POP Keys
         try:

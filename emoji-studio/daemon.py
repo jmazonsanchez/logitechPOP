@@ -126,12 +126,14 @@ def main():
     os.chmod(socket_path, 0o600)
 
     # Estado del portapapeles y pre-calentamiento
-    current_clipboard_emoji = None
+    last_emoji = None
+    last_paste_time = 0.0
     try:
         init_emojis = load_emojis()
         primary_emoji = init_emojis.get("1", "🔥")
         copy_to_clipboard(primary_emoji)
-        current_clipboard_emoji = primary_emoji
+        last_emoji = primary_emoji
+        last_paste_time = time.time()
     except Exception:
         pass
 
@@ -154,6 +156,21 @@ def main():
             if not data:
                 continue
 
+            if data == "reload":
+                # Recargar configuración y pre-calentar portapapeles con Tecla 1
+                try:
+                    global _cached_emojis, _cached_mtime
+                    _cached_emojis = None
+                    _cached_mtime = 0
+                    emojis = load_emojis()
+                    primary_emoji = emojis.get("1", "🔥")
+                    copy_to_clipboard(primary_emoji)
+                    last_emoji = primary_emoji
+                    last_paste_time = time.time()
+                except Exception:
+                    pass
+                continue
+
             if data == "5":
                 # Selector de emojis de GNOME: Super + . (latencia mínima ~25ms)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
@@ -170,11 +187,15 @@ def main():
             elif data in ["1", "2", "3", "4"]:
                 emojis = load_emojis()
                 target_emoji = emojis.get(data, "😊")
+                now = time.time()
 
-                # Si el emoji solicitado ya está en el portapapeles, omitir wl-copy (0ms)
-                if target_emoji != current_clipboard_emoji:
+                # Si es la misma tecla pulsada en ráfaga (últimos 3s), omitir wl-copy (latencia instantánea ~22ms)
+                # Si es un emoji distinto o pasaron más de 3s (posible copia externa), actualizar portapapeles
+                if target_emoji != last_emoji or (now - last_paste_time) > 3.0:
                     copy_to_clipboard(target_emoji)
-                    current_clipboard_emoji = target_emoji
+                    last_emoji = target_emoji
+
+                last_paste_time = now
 
                 # Simulación de Ctrl + V de alta respuesta (~22ms)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
