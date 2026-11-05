@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 emoji_manager.py - Gestor Gráfico para las Teclas de Emojis de Logitech POP Keys
-Interfaz gráfica nativa en GTK3 para personalizar las 4 teclas de emojis y el selector general.
+Interfaz gráfica nativa en GTK3 con logotipo LogiPop, paleta en matriz por tipo y diseño compacto.
 """
 
 import os
@@ -13,10 +13,11 @@ import yaml
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk, Pango, GLib
+from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(SCRIPT_DIR, "emojis.json")
+ICON_FILE = os.path.join(SCRIPT_DIR, "logipop.svg")
 SOLAAR_CONFIG_DIR = os.path.expanduser("~/.config/solaar")
 SOLAAR_CONFIG_FILE = os.path.join(SOLAAR_CONFIG_DIR, "config.yaml")
 SOLAAR_RULES_FILE = os.path.join(SOLAAR_CONFIG_DIR, "rules.yaml")
@@ -28,19 +29,48 @@ DEFAULT_EMOJIS = {
     "4": "🔥"
 }
 
-PALETTES = {
-    "😊 Expresiones": ["😍", "😂", "😊", "🔥", "😭", "🥳", "🤔", "😎", "🥰", "🤣", "🙄", "🥺", "😴", "😇", "🤯", "🤩"],
-    "👍 Gestos": ["👍", "👏", "🙏", "✌️", "🤝", "👊", "💪", "👋", "🤞", "👌", "🤘", "🤙", "👈", "👉", "✍️", "🙌"],
-    "✨ Símbolos": ["❤️", "✨", "💡", "🚀", "🎉", "💯", "☕", "⭐", "⚡", "💬", "🎯", "🏆", "💻", "📌", "🎨", "🔥"],
-    "💼 Trabajo": ["✅", "❌", "⚠️", "❓", "❗", "⏳", "📅", "💼", "📊", "🔍", "📢", "🔔", "🎁", "🧠", "📝", "🔒"]
+# Colección organizada en matrices de 8 columnas x 3 filas (24 emojis por pestaña)
+EMOJI_CATEGORIES = {
+    "😀 Caras": [
+        "😍", "😂", "😊", "🔥", "😭", "🥳", "🤔", "😎",
+        "🥰", "🤣", "🙄", "🥺", "😴", "😇", "🤯", "🤩",
+        "😜", "😬", "🤤", "🤫", "😏", "😱", "🤪", "💀"
+    ],
+    "👍 Gestos": [
+        "👍", "👏", "🙏", "✌️", "🤝", "👊", "💪", "👋",
+        "🤞", "👌", "🤘", "🤙", "👈", "👉", "✍️", "🙌",
+        "👀", "🤷", "🤦", "🫡", "💯", "🔥", "✨", "⚡"
+    ],
+    "❤️ Símbolos": [
+        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
+        "💔", "❣️", "💕", "💞", "💓", "💗", "💖", "💘",
+        "⭐", "🌟", "💫", "✨", "💥", "💢", "💬", "💭"
+    ],
+    "💼 Trabajo": [
+        "✅", "❌", "⚠️", "❓", "❗", "⏳", "📅", "💼",
+        "📊", "🔍", "📢", "🔔", "💡", "🚀", "💻", "📌",
+        "📝", "🔒", "🔑", "🎯", "🏆", "🎉", "☕", "🧠"
+    ],
+    "🎉 Festejo": [
+        "🎉", "🎊", "🎁", "🎈", "🍾", "🍻", "🍕", "🍔",
+        "🌮", "🍩", "🍦", "🍿", "🎸", "🎮", "🏖️", "✈️",
+        "🌈", "☀️", "☕", "🎂", "🥳", "💃", "🕺", "🔥"
+    ]
 }
 
 class EmojiManagerWindow(Gtk.Window):
     def __init__(self):
         super().__init__(title="LogiPop Emoji Studio")
-        self.set_default_size(560, 680)
+        self.set_default_size(600, 580)
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.set_resizable(False)
+        self.set_resizable(True)
+
+        # Cargar icono de ventana
+        if os.path.exists(ICON_FILE):
+            try:
+                self.set_icon_from_file(ICON_FILE)
+            except Exception:
+                pass
 
         self.emojis = self.load_config()
         self.selected_key_idx = "1"
@@ -51,29 +81,61 @@ class EmojiManagerWindow(Gtk.Window):
         self.build_ui()
 
     def build_ui(self):
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
-        main_box.set_border_width(18)
-        self.add(main_box)
+        # Contenedor con Scroll para garantizar que nunca se corte la ventana
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_overlay_scrolling(True)
+        self.add(scrolled)
 
-        # 1. Encabezado
-        header_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        title_label = Gtk.Label()
-        title_label.set_markup("<span size='xx-large' weight='bold'>⌨️ Logitech POP Emojis</span>")
-        title_label.set_halign(Gtk.Align.CENTER)
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        main_box.set_border_width(16)
+        scrolled.add(main_box)
+
+        # ======================================================================
+        # 1. Encabezado con Logotipo LogiPop
+        # ======================================================================
+        header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        header_box.set_halign(Gtk.Align.CENTER)
+        header_box.set_margin_bottom(4)
+
+        # Icono SVG de LogiPop
+        if os.path.exists(ICON_FILE):
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(ICON_FILE, 46, 46, True)
+                logo_img = Gtk.Image.new_from_pixbuf(pixbuf)
+                header_box.pack_start(logo_img, False, False, 0)
+            except Exception:
+                pass
+
+        title_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+
+        # Logo Tipográfico: logi POP STUDIO
+        logo_label = Gtk.Label()
+        logo_label.set_markup(
+            "<span font_desc='Ubuntu, Cantarell, Sans Bold 20' color='#1E1E24'>logi</span>"
+            "<span font_desc='Ubuntu, Cantarell, Sans Heavy 18' background='#FFD200' color='#18181B'> POP </span>"
+            "<span font_desc='Ubuntu, Cantarell, Sans Bold 11' color='#6C5CE7'> EMOJI STUDIO</span>"
+        )
+        logo_label.set_xalign(0)
 
         subtitle_label = Gtk.Label()
-        subtitle_label.set_markup("<span color='#666'>Personaliza los 4 botones físicos de emojis y el selector general del POP Keys</span>")
-        subtitle_label.set_halign(Gtk.Align.CENTER)
+        subtitle_label.set_markup("<span size='small' color='#666'>Configurador de teclas mecánicas de emojis para Logitech POP Keys</span>")
+        subtitle_label.set_xalign(0)
 
-        header_box.pack_start(title_label, False, False, 0)
-        header_box.pack_start(subtitle_label, False, False, 0)
+        title_vbox.pack_start(logo_label, False, False, 0)
+        title_vbox.pack_start(subtitle_label, False, False, 0)
+        header_box.pack_start(title_vbox, False, False, 0)
+
         main_box.pack_start(header_box, False, False, 0)
 
-        # 2. Contenedor de las 4 teclas físicas
-        keys_frame = Gtk.Frame(label=" 4 Teclas Físicas de Emojis ")
+        # ======================================================================
+        # 2. Las 4 Teclas Físicas de Emojis (Organizadas Horizontalmente)
+        # ======================================================================
+        keys_frame = Gtk.Frame(label=" 4 Teclas Físicas de Emojis (Borde Derecho del Teclado) ")
         keys_frame.get_style_context().add_class("keys-frame")
-        keys_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        keys_box.set_border_width(12)
+
+        keys_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        keys_box.set_border_width(10)
         keys_box.set_homogeneous(True)
 
         key_meta = [
@@ -89,8 +151,8 @@ class EmojiManagerWindow(Gtk.Window):
             if idx == self.selected_key_idx:
                 card.get_style_context().add_class("key-card-active")
 
-            c_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-            c_box.set_border_width(8)
+            c_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            c_box.set_border_width(6)
 
             t_lbl = Gtk.Label()
             t_lbl.set_markup(f"<b>{title}</b>")
@@ -112,8 +174,8 @@ class EmojiManagerWindow(Gtk.Window):
 
             c_box.pack_start(t_lbl, False, False, 0)
             c_box.pack_start(sub_lbl, False, False, 0)
-            c_box.pack_start(entry, False, False, 4)
-            c_box.pack_start(test_btn, False, False, 0)
+            c_box.pack_start(entry, False, False, 2)
+            c_box.pack_start(test_btn, False, False, 2)
 
             card.add(c_box)
             card.connect("button-press-event", self.on_card_clicked, idx)
@@ -125,44 +187,56 @@ class EmojiManagerWindow(Gtk.Window):
         keys_frame.add(keys_box)
         main_box.pack_start(keys_frame, False, False, 0)
 
-        # 3. Paleta de selección rápida por categorías
-        palette_frame = Gtk.Frame(label=" Paleta de Emojis Rápidos (Haz clic para asignar a la tecla activa) ")
+        # ======================================================================
+        # 3. Paleta de Emojis en MATRIZ 2D por Categoría (8 Columnas x 3 Filas)
+        # ======================================================================
+        palette_frame = Gtk.Frame(label=" Catálogo de Emojis en Matriz (Haz clic en un emoji para asignarlo a la tecla activa) ")
         palette_frame.get_style_context().add_class("palette-frame")
 
         notebook = Gtk.Notebook()
         notebook.get_style_context().add_class("palette-notebook")
 
-        for cat_name, emoji_list in PALETTES.items():
-            flow = Gtk.FlowBox()
-            flow.set_max_children_per_line(8)
-            flow.set_selection_mode(Gtk.SelectionMode.NONE)
-            flow.set_halign(Gtk.Align.CENTER)
-            flow.set_border_width(8)
+        for cat_name, emoji_list in EMOJI_CATEGORIES.items():
+            # Matriz Gtk.Grid para distribución simétrica 8x3
+            grid = Gtk.Grid()
+            grid.set_column_spacing(6)
+            grid.set_row_spacing(6)
+            grid.set_halign(Gtk.Align.CENTER)
+            grid.set_valign(Gtk.Align.CENTER)
+            grid.set_border_width(10)
 
-            for em in emoji_list:
+            cols = 8
+            for i, em in enumerate(emoji_list):
                 btn = Gtk.Button(label=em)
+                btn.set_size_request(38, 38)
                 btn.get_style_context().add_class("palette-emoji-btn")
+                btn.set_tooltip_text(f"Asignar {em} a la tecla activa")
                 btn.connect("clicked", self.on_quick_emoji_selected, em)
-                flow.add(btn)
+
+                col = i % cols
+                row = i // cols
+                grid.attach(btn, col, row, 1, 1)
 
             tab_lbl = Gtk.Label(label=cat_name)
-            notebook.append_page(flow, tab_lbl)
+            notebook.append_page(grid, tab_lbl)
 
         palette_frame.add(notebook)
         main_box.pack_start(palette_frame, False, False, 0)
 
-        # 4. Información Tecla 5 (Selector General)
-        p5_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        # ======================================================================
+        # 4. Tecla 5: Selector Completo de Emojis del Sistema
+        # ======================================================================
+        p5_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         p5_box.get_style_context().add_class("key5-card")
-        p5_box.set_border_width(10)
+        p5_box.set_border_width(8)
 
         p5_icon = Gtk.Label()
-        p5_icon.set_markup("<span size='xx-large'>🌐</span>")
+        p5_icon.set_markup("<span size='x-large'>🌐</span>")
 
         p5_info = Gtk.Label()
         p5_info.set_markup(
-            "<b>Tecla 5: Selector Completo de Emojis (Panel Global)</b>\n"
-            "<span size='small' color='#555'>Presiona el 5to botón de tu teclado para desplegar el selector nativo del sistema (Super + . / Ctrl + .)</span>"
+            "<b>Tecla 5: Selector Global de Emojis</b>  "
+            "<span size='small' color='#555'>(Abre el panel nativo de GNOME: Super + .)</span>"
         )
         p5_info.set_xalign(0)
 
@@ -175,10 +249,13 @@ class EmojiManagerWindow(Gtk.Window):
         p5_box.pack_start(p5_test, False, False, 0)
         main_box.pack_start(p5_box, False, False, 0)
 
+        # ======================================================================
         # 5. Barra Inferior de Acciones
-        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        # ======================================================================
+        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        btn_box.set_margin_top(4)
 
-        reset_btn = Gtk.Button(label="↺ Restablecer Valores")
+        reset_btn = Gtk.Button(label="↺ Valores por Defecto")
         reset_btn.get_style_context().add_class("reset-btn")
         reset_btn.connect("clicked", self.on_reset_clicked)
 
@@ -253,7 +330,7 @@ class EmojiManagerWindow(Gtk.Window):
             f"• Tecla 2: {new_config['2']}\n"
             f"• Tecla 3: {new_config['3']}\n"
             f"• Tecla 4: {new_config['4']}\n"
-            f"• Tecla 5: Selector Completo (Super + .)\n\n"
+            f"• Tecla 5: Selector Global (Super + .)\n\n"
             f"{solaar_msg}"
         )
         self.show_message(Gtk.MessageType.INFO, "LogiPop Emojis Aplicados", summary_text)
@@ -358,73 +435,82 @@ class EmojiManagerWindow(Gtk.Window):
         css_provider = Gtk.CssProvider()
         css = b"""
         window {
-            background-color: #fafafa;
+            background-color: #f8f9fa;
         }
         .keys-frame {
-            border: 1px solid #d0d0d8;
-            border-radius: 10px;
+            border: 1px solid #dcdce6;
+            border-radius: 8px;
             font-weight: bold;
+            background-color: #ffffff;
         }
         .key-card {
-            background-color: #ffffff;
+            background-color: #fcfcfd;
             border-radius: 8px;
-            border: 2px solid #e2e2ea;
-            transition: all 200ms ease;
+            border: 2px solid #e2e2ec;
+            transition: all 150ms ease;
         }
         .key-card-active {
-            border-color: #6200ea;
-            background-color: #f6f0ff;
-            box-shadow: 0 0 8px rgba(98, 0, 234, 0.25);
+            border-color: #6c5ce7;
+            background-color: #f7f4ff;
+            box-shadow: 0 0 6px rgba(108, 92, 231, 0.3);
         }
         .emoji-display {
-            font-size: 26px;
-            padding: 4px;
-            border-radius: 8px;
+            font-size: 24px;
+            padding: 2px;
+            border-radius: 6px;
             border: 1px solid #ccc;
-            background-color: #fff;
+            background-color: #ffffff;
         }
         .test-btn {
             font-size: 11px;
-            padding: 4px 6px;
-            border-radius: 6px;
+            padding: 3px 6px;
+            border-radius: 5px;
         }
         .palette-frame {
-            border: 1px solid #d0d0d8;
-            border-radius: 10px;
+            border: 1px solid #dcdce6;
+            border-radius: 8px;
             font-weight: bold;
+            background-color: #ffffff;
         }
         .palette-notebook tab {
-            padding: 6px 10px;
+            padding: 4px 8px;
             font-weight: bold;
+            font-size: 12px;
         }
         .palette-emoji-btn {
-            font-size: 20px;
-            padding: 4px 8px;
-            margin: 2px;
+            font-size: 18px;
+            padding: 2px;
+            margin: 0;
             border-radius: 6px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e8;
+        }
+        .palette-emoji-btn:hover {
+            background-color: #f0edff;
+            border-color: #6c5ce7;
         }
         .key5-card {
-            background-color: #f0f4f8;
-            border: 1px solid #d0d8e2;
+            background-color: #f1f3f6;
+            border: 1px solid #d0d7de;
             border-radius: 8px;
         }
         .test-btn-wide {
             font-size: 12px;
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 6px;
         }
         .save-btn {
-            background-image: linear-gradient(to bottom, #6200ea, #4a00b0);
+            background-image: linear-gradient(to bottom, #6c5ce7, #5344c7);
             color: white;
             font-weight: bold;
-            font-size: 14px;
-            padding: 10px 16px;
-            border-radius: 8px;
+            font-size: 13px;
+            padding: 8px 16px;
+            border-radius: 6px;
         }
         .reset-btn {
-            font-size: 13px;
-            padding: 10px 14px;
-            border-radius: 8px;
+            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: 6px;
         }
         """
         css_provider.load_from_data(css)
