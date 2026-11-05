@@ -87,19 +87,87 @@ StartupNotify=false
 EOF
 echo "✔ Demonio de teclado virtual configurado para inicio automático en el arranque."
 
-# 5. Iniciar o reiniciar el demonio en segundo plano
+# 5. Verificar acceso de escritura a /dev/uinput (teclado virtual del demonio)
+# La regla udev de Solaar (60-solaar.rules) otorga el permiso vía 'uaccess', pero solo
+# se aplica al arrancar el sistema: si Solaar se instaló después del último arranque,
+# /dev/uinput sigue siendo exclusivo de root y los emojis no se insertan.
+UINPUT_OK=1
+if [[ ! -w /dev/uinput ]]; then
+    UINPUT_OK=0
+    echo ""
+    echo "⚠️  Tu usuario no tiene permiso de escritura sobre /dev/uinput."
+    echo "    Sin este permiso el demonio no puede insertar los emojis."
+
+    if grep -qs 'KERNEL=="uinput"' /usr/lib/udev/rules.d/*solaar*.rules /etc/udev/rules.d/*solaar*.rules; then
+        echo "    La regla udev de Solaar está instalada pero aún no se ha aplicado"
+        echo "    (normalmente porque Solaar se instaló después del último arranque)."
+
+        if [[ -t 0 ]]; then
+            read -p "    ¿Aplicarla ahora con sudo? [S/n]: " apply_udev || apply_udev="n"
+            if [[ ! "${apply_udev:-S}" =~ ^[nN] ]]; then
+                sudo udevadm trigger --action=change --sysname-match=uinput || true
+                sudo udevadm settle || true
+                if [[ -w /dev/uinput ]]; then
+                    UINPUT_OK=1
+                    echo "✔ Permiso sobre /dev/uinput aplicado."
+                fi
+            fi
+        fi
+
+        if [[ "$UINPUT_OK" -eq 0 ]]; then
+            echo "    Solución: reinicia el equipo, o ejecuta:"
+            echo "      sudo udevadm trigger --action=change --sysname-match=uinput"
+            echo "    y luego vuelve a correr este instalador."
+        fi
+    else
+        echo "    No se encontró la regla udev de Solaar para uinput."
+        echo "    Instala Solaar desde el repositorio de tu distribución (sudo apt install solaar)"
+        echo "    y reinicia el equipo antes de volver a correr este instalador."
+    fi
+    echo ""
+fi
+
+# 6. Iniciar o reiniciar el demonio en segundo plano
 pkill -f "$SCRIPT_DIR/daemon.py" 2>/dev/null || true
 sleep 0.3
-nohup python3 "$SCRIPT_DIR/daemon.py" </dev/null &>/dev/null &
-echo "✔ Demonio de inyección activo en segundo plano."
+# Socket del demonio (misma ruta que daemon.py). Se elimina el sobrante de una instancia
+# anterior terminada con SIGTERM para no confundirlo con el de la nueva.
+DAEMON_SOCK="${XDG_RUNTIME_DIR:-/tmp}/logipop_emoji_$(id -u).sock"
+rm -f "$DAEMON_SOCK"
+if [[ "$UINPUT_OK" -eq 1 ]]; then
+    nohup python3 "$SCRIPT_DIR/daemon.py" </dev/null &>/dev/null &
+    DAEMON_PID=$!
 
-# 6. Aplicar configuración inicial y reglas en Solaar
+    # Registrar el teclado virtual en uinput toma ~2 s: esperar el socket mientras
+    # el proceso siga vivo (si falla, termina antes y se corta la espera), máximo 8 s.
+    for _ in $(seq 1 40); do
+        [[ -S "$DAEMON_SOCK" ]] && break
+        kill -0 "$DAEMON_PID" 2>/dev/null || break
+        sleep 0.2
+    done
+    if [[ -S "$DAEMON_SOCK" ]] && kill -0 "$DAEMON_PID" 2>/dev/null; then
+        echo "✔ Demonio de inyección activo en segundo plano."
+    else
+        UINPUT_OK=0
+        echo "⚠️  El demonio no pudo iniciarse. Ejecútalo a mano para ver el error:"
+        echo "      python3 $SCRIPT_DIR/daemon.py"
+    fi
+else
+    echo "⏭ Demonio no iniciado: falta el permiso sobre /dev/uinput (arrancará solo tras reiniciar)."
+fi
+
+# 7. Aplicar configuración inicial y reglas en Solaar
 echo "⚙️ Configurando reglas de teclado en Solaar..."
 python3 "$SCRIPT_DIR/emoji_manager.py" --apply || true
 
 echo ""
 echo "=========================================================="
-echo "🎉 ¡LogiPop Emoji Studio instalado con éxito!"
+if [[ "$UINPUT_OK" -eq 1 ]]; then
+    echo "🎉 ¡LogiPop Emoji Studio instalado con éxito!"
+else
+    echo "⚠️  LogiPop Emoji Studio instalado, pero las teclas de emojis"
+    echo "    no funcionarán hasta resolver el permiso de /dev/uinput (ver arriba)."
+fi
 echo "Puedes abrir la aplicación desde el menú de aplicaciones"
 echo "o ejecutando: python3 $SCRIPT_DIR/emoji_manager.py"
 echo "=========================================================="
