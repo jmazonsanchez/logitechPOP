@@ -435,6 +435,13 @@ class EmojiManagerWindow(Gtk.Window):
         )
 
 def main():
+    if "--apply" in sys.argv or "--setup" in sys.argv:
+        app = EmojiManagerWindow()
+        ok, msg = app.apply_solaar_integration()
+        print(f"✔ Integración con Solaar: {msg}")
+        app.destroy()
+        return
+
     app = EmojiManagerWindow()
     app.connect("destroy", Gtk.main_quit)
     app.show_all()

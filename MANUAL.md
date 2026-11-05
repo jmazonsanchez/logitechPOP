@@ -193,8 +193,8 @@ Este atajo ejecuta internamente `switch-host.sh` y el conmutador nativo `switch.
 
 ## 6. Personalización y Modificación de Reglas
 
-### 6.1. Estructura del Archivo de Reglas (`rules.yaml`)
-El archivo de reglas se encuentra en la carpeta principal `LogiPop/rules.yaml`. Su estructura es:
+### 6.1. Estructura del Archivo de Reglas (`linux/rules.yaml`)
+El archivo de reglas se encuentra en la carpeta `linux/rules.yaml`. Su estructura es:
 
 ```yaml
 %YAML 1.3
@@ -239,7 +239,7 @@ El proyecto incluye una aplicación gráfica nativa llamada **LogiPop Emoji Stud
 * Desde el menú de aplicaciones de tu escritorio GNOME buscando **"LogiPop Emoji Studio"**.
 * O directamente desde la terminal con:
   ```bash
-  python3 emoji_manager.py
+  python3 emoji-studio/emoji_manager.py
   ```
 
 ---
@@ -248,7 +248,7 @@ El proyecto incluye una aplicación gráfica nativa llamada **LogiPop Emoji Stud
 Cada vez que realices cambios en `rules.yaml`, copia el archivo y recarga el servicio sin reiniciar la sesión:
 
 ```bash
-cp LogiPop/rules.yaml ~/.config/solaar/rules.yaml
+cp linux/rules.yaml ~/.config/solaar/rules.yaml
 pkill solaar && solaar --window=hide &
 ```
 
@@ -263,9 +263,9 @@ pkill solaar && solaar --window=hide &
   ```
   Si no devuelve ningún proceso, inícialo con: `solaar --window=hide &`.
 * **Prueba el cambio por línea de comandos directamente:**
-  Desde la carpeta `LogiPop`, ejecuta:
+  Desde la carpeta del proyecto, ejecuta:
   ```bash
-  ./switch-host.sh 2
+  ./linux/switch-host.sh 2
   ```
   Si el script cambia ambos dispositivos pero la tecla física F2 no lo hace, revisa que el archivo `~/.config/solaar/rules.yaml` exista y coincida con el provisto en el proyecto.
 
