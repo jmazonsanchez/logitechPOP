@@ -4,11 +4,13 @@ Solución de software y automatización para periféricos **Logitech POP** en Li
 
 > 📖 **¿Buscas el manual técnico detallado?** Consulta el [**Manual de Usuario Completo (MANUAL.md)**](MANUAL.md) con explicaciones a fondo de la problemática, la solvencia técnica, arquitectura de eventos y desinstalación.
 
-> [!IMPORTANT]
-> **Soporte Exclusivo para Linux:** Este proyecto y el script `setup.sh` están diseñados específicamente para distribuciones **Linux** (Ubuntu, Debian y derivados con GNOME). Si utilizas **Windows**, no necesitas este script ni Solaar, ya que Logitech ofrece soporte oficial nativo mediante su propia aplicación **Logi Options+** (que incluye la función *Logitech Flow* para enlazar teclado y ratón).
+> [!NOTE]
+> **Compatibilidad Multiplataforma (Linux & Windows):**
+> * **En Linux:** Utiliza `./setup.sh` (requiere Solaar).
+> * **En Windows:** Entra a la carpeta `windows/` y haz doble clic sobre `setup.bat`. ¡Compilará e instalará automáticamente la aplicación nativa en segundo plano con los mismos atajos (<kbd>Win</kbd> + <kbd>Alt</kbd> + <kbd>1/2/3</kbd>) sin necesidad de instalar herramientas adicionales!
 
 > [!WARNING]
-> **Instalación Obligatoria en Todos los Equipos Linux:** Para que la conmutación funcione de manera fluida y bidireccional, **debes instalar y ejecutar este proyecto en cada uno de tus dispositivos Linux**. Al estar en la Laptop 1, esta es la que envía la orden para saltar a la Laptop 2; y cuando estés trabajando en la Laptop 2, necesitarás tener instalado el proyecto allí para que pueda enviar la orden de regreso hacia la Laptop 1.
+> **Instalación Obligatoria en Todos tus Equipos:** Para que la conmutación funcione de manera fluida y bidireccional, **debes instalar y ejecutar este proyecto en cada uno de tus dispositivos (sean Linux o Windows)**. Al estar en la Laptop 1, esta envía la orden para saltar a la Laptop 2; y cuando estés trabajando en la Laptop 2, necesitarás tener instalado el proyecto allí para que pueda enviar la orden de regreso hacia la Laptop 1.
 
 ---
 
