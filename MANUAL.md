@@ -217,12 +217,30 @@ El archivo de reglas se encuentra en la carpeta principal `LogiPop/rules.yaml`. 
 
 ---
 
-### 6.2. Asignar Otras Teclas (ej. Teclas de Emoji)
-El teclado POP Keys cuenta con 4 teclas mecánicas de emojis intercambiables en el borde derecho. Si prefieres no usar la fila F1-F3 y prefieres asignar los cambios a las teclas de emojis:
-1. Abre la interfaz de Solaar desde la terminal ejecutando `solaar`.
-2. Selecciona **Logi POP Keys** ➔ **Teclas reprogramables**.
-3. Cambia la tecla de emoji que desees a la opción **Desviada** (*Diverted*).
-4. Edita `rules.yaml` sustituyendo `Host Switch Channel X` por el nombre asignado a esa tecla de emoji.
+### 6.2. Personalización de Emojis con LogiPop Emoji Studio
+El teclado Logitech POP Keys cuenta con 5 teclas dedicadas en el borde lateral derecho:
+* **4 teclas mecánicas intercambiables** (por defecto identificadas con caras de emojis).
+* **1 tecla inferior** con el icono de menú de emojis para desplegar la biblioteca completa.
+
+El proyecto incluye una aplicación gráfica nativa llamada **LogiPop Emoji Studio** (`emoji_manager.py`) diseñada para gestionar estas teclas de manera visual:
+
+#### Funcionalidades de la aplicación:
+1. **Asignación rápida de emojis:** Cuenta con 4 pestañas de selección rápida (*Expresiones*, *Gestos*, *Símbolos*, *Trabajo*). Haz clic en cualquier tecla de la ventana y luego en el emoji deseado de la paleta.
+2. **Compatibilidad Unicode total:** Puedes escribir directamente cualquier emoji compuesto, bandera o símbolo especial en las casillas.
+3. **Botón de prueba integrado (`📋 Probar`):** Permite verificar la inyección del emoji en tiempo real sin requerir pulsar físicamente la tecla del teclado.
+4. **Soporte para el Selector General de Emojis:** La 5ta tecla está vinculada al selector del sistema operativo mediante el atajo nativo (<kbd>Super</kbd> + <kbd>.</kbd> / <kbd>Ctrl</kbd> + <kbd>.</kbd>).
+5. **Aplicación automática a Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación:
+   * Guarda los emojis en `emojis.json`.
+   * Actualiza el parámetro `divert-keys` en `~/.config/solaar/config.yaml` asignando el valor `1` (Diverted) a las teclas 260, 261, 262, 263 y 264.
+   * Genera las reglas en `~/.config/solaar/rules.yaml` vinculando cada pulsación con `send_emoji.py`.
+   * Reinicia el demonio Solaar en segundo plano para que los cambios surtan efecto de inmediato.
+
+#### Cómo abrir la aplicación:
+* Desde el menú de aplicaciones de tu escritorio GNOME buscando **"LogiPop Emoji Studio"**.
+* O directamente desde la terminal con:
+  ```bash
+  python3 emoji_manager.py
+  ```
 
 ---
 

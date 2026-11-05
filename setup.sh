@@ -13,7 +13,7 @@ echo "=========================================================="
 echo ""
 
 # 1. Permisos de ejecución
-chmod +x "$SCRIPT_DIR/switch-host.sh" "$SCRIPT_DIR/configure-shortcuts.sh"
+chmod +x "$SCRIPT_DIR/switch-host.sh" "$SCRIPT_DIR/configure-shortcuts.sh" "$SCRIPT_DIR/send_emoji.py" "$SCRIPT_DIR/emoji_manager.py"
 echo "✔ Permisos asignados a los scripts."
 
 # 2. Comprobar Solaar
@@ -72,6 +72,22 @@ read -p "¿Configurar atajos Super+Alt+1/2/3? (S/n): " resp_shortcuts || resp_sh
 if [[ ! "$resp_shortcuts" =~ ^[nN]$ ]]; then
     "$SCRIPT_DIR/configure-shortcuts.sh"
 fi
+
+# 6. Instalar lanzador de LogiPop Emoji Studio
+APP_DIR="$HOME/.local/share/applications"
+mkdir -p "$APP_DIR"
+cat << EOF > "$APP_DIR/logipop-emojis.desktop"
+[Desktop Entry]
+Type=Application
+Name=LogiPop Emoji Studio
+Comment=Personalizador de teclas de emojis para Logitech POP Keys
+Exec=python3 $SCRIPT_DIR/emoji_manager.py
+Icon=accessories-character-map
+Terminal=false
+Categories=Utility;Settings;
+StartupNotify=true
+EOF
+echo "✔ Acceso directo 'LogiPop Emoji Studio' instalado en el menú de aplicaciones."
 
 echo ""
 echo "=========================================================="

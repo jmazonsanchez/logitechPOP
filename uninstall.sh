@@ -72,6 +72,13 @@ if [[ -f "$RULES_FILE" ]]; then
     echo "✔ Archivo de reglas eliminado ($RULES_FILE)."
 fi
 
+# 4. Remover acceso directo de LogiPop Emoji Studio
+EMOJI_DESKTOP="$HOME/.local/share/applications/logipop-emojis.desktop"
+if [[ -f "$EMOJI_DESKTOP" ]]; then
+    rm -f "$EMOJI_DESKTOP"
+    echo "✔ Acceso directo de emojis eliminado ($EMOJI_DESKTOP)."
+fi
+
 echo ""
 echo "=========================================================="
 echo "✅ ¡Configuración deshabilitada por completo!"

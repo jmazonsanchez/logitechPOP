@@ -104,8 +104,37 @@ sudo apt remove --purge solaar
 
 ---
 
+## 😃 LogiPop Emoji Studio (Configurador de Teclas de Emojis)
+
+El teclado **Logitech POP Keys** cuenta con una columna física de teclas dedicadas a emojis en su lateral derecho:
+* **4 Teclas personalizables** (por defecto: 😍, 😂, 😊, 🔥 / 😭)
+* **1 Tecla de Menú de Emojis** (abre el selector completo del sistema operativo)
+
+Con **LogiPop Emoji Studio** dispones de una aplicación gráfica nativa en GTK3 para asignar cualquier emoji a estas teclas sin complicaciones:
+
+![LogiPop Emoji Studio](https://raw.githubusercontent.com/jmazonsanchez/logitechPOP/main/preview-emojis.png) *(Interfaz GTK3)*
+
+### Características:
+1. **Paleta Rápida por Categorías:** Explora decenas de emojis organizados en *Expresiones*, *Gestos*, *Símbolos* y *Trabajo*. Basta un clic sobre cualquier emoji para asignarlo a la tecla seleccionada.
+2. **Entrada Libre de Emojis:** Puedes escribir o pegar cualquier emoji o carácter Unicode directamente en cada casilla.
+3. **Botón de Prueba Instantánea (`📋 Probar`):** Permite verificar la inserción inmediata del emoji en cualquier aplicación activa.
+4. **Tecla 5 (Selector Global):** Configurada para abrir el selector nativo de emojis del sistema (<kbd>Super</kbd> + <kbd>.</kbd> / <kbd>Ctrl</kbd> + <kbd>.</kbd>).
+5. **Aplicación Automática a Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación desvía (*divert*) las teclas en el hardware y genera las reglas correspondientes en segundo plano.
+
+### ¿Cómo abrir la aplicación?
+* **Desde el Menú de Aplicaciones de Ubuntu:** Busca *"LogiPop Emoji Studio"* o *"Emojis"*.
+* **Desde la Terminal:**
+  ```bash
+  python3 emoji_manager.py
+  ```
+
+---
+
 ## 🛠️ Estructura del Proyecto
 
+* [`emoji_manager.py`](emoji_manager.py): Mini app gráfica (GTK3) para personalizar las 4 teclas de emojis y la tecla de panel global.
+* [`send_emoji.py`](send_emoji.py): Motor de inyección de emojis y apertura del selector de GNOME vía Wayland/X11 y uinput.
+* [`emojis.json`](emojis.json): Archivo de persistencia de la configuración de emojis.
 * [`switch.py`](switch.py): Conmutador nativo en Python ultrarrápido (<90ms) que escribe directamente a `/dev/hidraw`.
 * [`switch-host.sh`](switch-host.sh): Script wrapper con notificaciones visuales en pantalla (OSD).
 * [`configure-shortcuts.sh`](configure-shortcuts.sh): Registrador de atajos de teclado nativos para GNOME (<kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>Num</kbd>).
