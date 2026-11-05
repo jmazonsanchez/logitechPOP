@@ -23,6 +23,15 @@ echo ""
 chmod +x "$SCRIPT_DIR/emoji_manager.py" "$SCRIPT_DIR/send_emoji.py" "$SCRIPT_DIR/send_emoji.sh" "$SCRIPT_DIR/daemon.py" "$SCRIPT_DIR/picker.py" "$SCRIPT_DIR/bin/wl-copy" "$SCRIPT_DIR/bin/wl-paste"
 echo "✔ Permisos asignados a los scripts y binarios de Emoji Studio."
 
+# 1b. Restablecer los emojis por defecto (emojis.json es configuración local, no versionada)
+if [[ -f "$SCRIPT_DIR/emojis.json" ]] && ! cmp -s "$SCRIPT_DIR/emojis.default.json" "$SCRIPT_DIR/emojis.json"; then
+    EMOJIS_BACKUP="$SCRIPT_DIR/emojis.json.bak.$(date +%s)"
+    cp -f "$SCRIPT_DIR/emojis.json" "$EMOJIS_BACKUP"
+    echo "ℹ Tu configuración anterior de emojis se respaldó en: $EMOJIS_BACKUP"
+fi
+cp -f "$SCRIPT_DIR/emojis.default.json" "$SCRIPT_DIR/emojis.json"
+echo "✔ Emojis por defecto aplicados (Tecla 1: 😍  2: 😂  3: 😊  4: 🔥)."
+
 # 2. Instalar iconos en el tema del sistema (XDG Icon Theme) para menú, dock y ventana
 ICON_THEME_DIR="$HOME/.local/share/icons/hicolor"
 mkdir -p "$ICON_THEME_DIR/scalable/apps"

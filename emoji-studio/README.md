@@ -68,7 +68,8 @@ cd emoji-studio
 * [`emoji_manager.py`](emoji_manager.py): Interfaz gráfica GTK3 con paleta de emojis y asistente de integración.
 * [`daemon.py`](daemon.py): Demonio en segundo plano con teclado virtual persistente (`/dev/uinput`) e inyector rápido.
 * [`send_emoji.py`](send_emoji.py): Disparador rápido invocado por Solaar para comunicar la pulsación al demonio.
-* [`emojis.json`](emojis.json): Archivo de persistencia JSON de los 4 emojis configurados.
+* [`emojis.default.json`](emojis.default.json): Emojis por defecto (😍 😂 😊 🔥) que el instalador aplica en cada instalación.
+* `emojis.json`: Configuración local de los 4 emojis (la crea el instalador y la actualiza la app; no se versiona).
 * [`bin/wl-copy`](bin/): Binario independiente de gestión de portapapeles para Wayland.
 * [`setup.sh`](setup.sh): Instalador del lanzador `.desktop`, demonio autostart e integración con Solaar.
 * [`uninstall.sh`](uninstall.sh): Desinstalador limpio.

@@ -31,7 +31,7 @@ LogiPop/
 ├── emoji-studio/       # 😃 Mini app gráfica GTK3 para Emojis (Exclusivo para Linux)
 │   ├── emoji_manager.py
 │   ├── send_emoji.py
-│   ├── emojis.json
+│   ├── emojis.default.json
 │   ├── setup.sh
 │   ├── uninstall.sh
 │   └── README.md

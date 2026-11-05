@@ -14,3 +14,6 @@ Thumbs.db
 *.jpeg
 *.jpg
 !logipop.svg
+
+# Configuración local de emojis (los valores por defecto están en emojis.default.json)
+emoji-studio/emojis.json

@@ -227,7 +227,7 @@ El proyecto incluye una aplicación gráfica nativa llamada **LogiPop Emoji Stud
 3. **Botón de prueba integrado (`📋 Probar`):** Permite verificar la inyección del emoji en tiempo real sin requerir pulsar físicamente la tecla del teclado.
 4. **Soporte para el Selector General de Emojis:** La 5ta tecla está vinculada al selector del sistema operativo mediante el atajo nativo (<kbd>Super</kbd> + <kbd>.</kbd> / <kbd>Ctrl</kbd> + <kbd>.</kbd>).
 5. **Aplicación automática a Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación:
-   * Guarda los emojis en `emojis.json`.
+   * Guarda los emojis en `emojis.json` (configuración local; cada instalación parte de los valores de `emojis.default.json`).
    * Actualiza el parámetro `divert-keys` en `~/.config/solaar/config.yaml` asignando el valor `1` (Diverted) a las teclas 260, 261, 262, 263 y 264.
    * Genera las reglas en `~/.config/solaar/rules.yaml` vinculando cada pulsación con `send_emoji.py`.
    * Reinicia el demonio Solaar en segundo plano para que los cambios surtan efecto de inmediato.
