@@ -87,7 +87,9 @@ StartupNotify=false
 EOF
 echo "✔ Demonio de teclado virtual configurado para inicio automático en el arranque."
 
-# 5. Iniciar el demonio en segundo plano
+# 5. Iniciar o reiniciar el demonio en segundo plano
+pkill -f "$SCRIPT_DIR/daemon.py" 2>/dev/null || true
+sleep 0.3
 nohup python3 "$SCRIPT_DIR/daemon.py" </dev/null &>/dev/null &
 echo "✔ Demonio de inyección activo en segundo plano."
 
