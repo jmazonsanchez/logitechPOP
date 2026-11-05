@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# configure-shortcuts.sh - Register GNOME Global Shortcuts for LogiPop
+# configure-shortcuts.sh - Register GNOME Global Shortcuts for LogiPop (3 Channels)
 # ==============================================================================
 set -euo pipefail
 
@@ -11,7 +11,7 @@ if [[ ! -x "$SWITCH_SCRIPT" ]]; then
     chmod +x "$SWITCH_SCRIPT"
 fi
 
-echo "⌨️ Configurando atajos globales de GNOME para LogiPop..."
+echo "⌨️ Configurando atajos globales de GNOME para los 3 canales de LogiPop..."
 
 if ! command -v gsettings >/dev/null 2>&1; then
     echo "⚠️ 'gsettings' no encontrado."
@@ -21,12 +21,11 @@ fi
 MEDIA_SCHEMA="org.gnome.settings-daemon.plugins.media-keys"
 CUSTOM_SCHEMA="org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
 
-# Atajos mapeados a los canales de laptops Linux:
-# Canal 1 -> Laptop 1
-# Canal 2 -> Laptop 2
+# Configuración por defecto de los 3 canales soportados por el hardware Logitech POP
 declare -A SHORTCUTS=(
-    ["logipop-c1"]="LogiPop -> Laptop 1|$SWITCH_SCRIPT 1 'Laptop 1'|<Super><Alt>1"
-    ["logipop-c2"]="LogiPop -> Laptop 2|$SWITCH_SCRIPT 2 'Laptop 2'|<Super><Alt>2"
+    ["logipop-c1"]="LogiPop -> Dispositivo 1|$SWITCH_SCRIPT 1 'Dispositivo 1'|<Super><Alt>1"
+    ["logipop-c2"]="LogiPop -> Dispositivo 2|$SWITCH_SCRIPT 2 'Dispositivo 2'|<Super><Alt>2"
+    ["logipop-c3"]="LogiPop -> Dispositivo 3|$SWITCH_SCRIPT 3 'Dispositivo 3'|<Super><Alt>3"
 )
 
 NEW_PATHS=()
@@ -50,7 +49,8 @@ import subprocess
 media_schema = '$MEDIA_SCHEMA'
 required = [
     \"'/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/logipop-c1/'\",
-    \"'/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/logipop-c2/'\"
+    \"'/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/logipop-c2/'\",
+    \"'/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/logipop-c3/'\"
 ]
 
 current_raw = subprocess.check_output(['gsettings', 'get', media_schema, 'custom-keybindings']).decode().strip()
@@ -69,6 +69,7 @@ subprocess.check_call(['gsettings', 'set', media_schema, 'custom-keybindings', n
 "
 
 echo ""
-echo "🎉 ¡Atajos configurados exitosamente en GNOME!"
-echo "  [Super + Alt + 1] ➔ Conectar teclado y mouse a Laptop 1"
-echo "  [Super + Alt + 2] ➔ Conectar teclado y mouse a Laptop 2"
+echo "🎉 ¡Los 3 atajos quedaron configurados exitosamente en GNOME!"
+echo "  [Super + Alt + 1] ➔ Conectar teclado y mouse a Dispositivo 1"
+echo "  [Super + Alt + 2] ➔ Conectar teclado y mouse a Dispositivo 2"
+echo "  [Super + Alt + 3] ➔ Conectar teclado y mouse a Dispositivo 3"

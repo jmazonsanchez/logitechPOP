@@ -12,12 +12,15 @@ Solución de software y automatización para periféricos **Logitech POP** en Li
 
 ---
 
-## 🎯 Arquitectura de Canales (Tus Dispositivos Linux)
+## 🎯 Arquitectura de Canales (Hasta 3 Dispositivos)
 
-| Canal / Host | Dispositivo Asignado | Conexión |
-| :---: | :--- | :--- |
-| **Canal 1** | **Laptop Linux 1** | Bluetooth BLE |
-| **Canal 2** | **Laptop Linux 2** | Bluetooth BLE |
+Por diseño de hardware, los periféricos Logitech POP admiten hasta **3 canales independientes**:
+
+| Canal / Host | Asignación | Conexión | Atajo Global |
+| :---: | :--- | :--- | :--- |
+| **Canal 1** | **Dispositivo 1** | Bluetooth BLE | <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd> |
+| **Canal 2** | **Dispositivo 2** | Bluetooth BLE | <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>2</kbd> |
+| **Canal 3** | **Dispositivo 3** | Bluetooth BLE | <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>3</kbd> |
 
 ---
 
@@ -26,9 +29,10 @@ Solución de software y automatización para periféricos **Logitech POP** en Li
 1. **Protocolo Logitech HID++ (`change-host`):**
    A través del script ultrarrápido [`switch.py`](switch.py), se envía la instrucción directa de hardware HID++ `0x1814` a `/dev/hidraw0` y `/dev/hidraw1` de forma concurrente, logrando un tiempo de respuesta inferior a **90 milisegundos**.
 2. **Atajos Globales Unificados (<kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>Num</kbd>):**
-   Para evitar cualquier conflicto con las aplicaciones ancladas en la barra lateral de Ubuntu (Dock), el cambio coordinado se realiza mediante:
-   * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd> ➔ Conectar ambos periféricos a **Laptop Linux 1**
-   * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>2</kbd> ➔ Conectar ambos periféricos a **Laptop Linux 2**
+   Para evitar cualquier conflicto con las aplicaciones ancladas en la barra lateral de Ubuntu (Dock), el cambio coordinado viene preconfigurado para los 3 canales:
+   * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd> ➔ Conectar ambos periféricos al **Dispositivo 1**
+   * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>2</kbd> ➔ Conectar ambos periféricos al **Dispositivo 2**
+   * <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>3</kbd> ➔ Conectar ambos periféricos al **Dispositivo 3**
 
 ---
 
@@ -59,7 +63,7 @@ El script se encargará de:
 1. Dar permisos de ejecución a las utilidades.
 2. Instalar el archivo `rules.yaml` en `~/.config/solaar/rules.yaml`.
 3. Configurar el inicio de Solaar en segundo plano al iniciar sesión.
-4. Registrar los atajos de teclado en GNOME (<kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>1/2</kbd>).
+4. Registrar los atajos de teclado en GNOME (<kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>1/2/3</kbd>).
 
 ---
 

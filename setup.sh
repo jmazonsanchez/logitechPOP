@@ -64,10 +64,11 @@ echo "✔ Solaar configurado para iniciar minimizado en el arranque ($AUTOSTART_
 
 # 5. Configurar atajos de GNOME
 echo ""
-echo "¿Deseas registrar los atajos de teclado globales en GNOME?"
-echo "  [Super + Alt + 1] -> Canal 1 (Laptop 1)"
-echo "  [Super + Alt + 2] -> Canal 2 (Laptop 2)"
-read -p "¿Configurar atajos Super+Alt+1/2? (S/n): " resp_shortcuts || resp_shortcuts="s"
+echo "¿Deseas registrar los atajos de teclado globales en GNOME para los 3 canales?"
+echo "  [Super + Alt + 1] -> Canal 1 (Dispositivo 1)"
+echo "  [Super + Alt + 2] -> Canal 2 (Dispositivo 2)"
+echo "  [Super + Alt + 3] -> Canal 3 (Dispositivo 3)"
+read -p "¿Configurar atajos Super+Alt+1/2/3? (S/n): " resp_shortcuts || resp_shortcuts="s"
 if [[ ! "$resp_shortcuts" =~ ^[nN]$ ]]; then
     "$SCRIPT_DIR/configure-shortcuts.sh"
 fi
