@@ -28,7 +28,7 @@ LogiPop/
 │   ├── switch.ps1
 │   └── README.md
 │
-├── emoji-studio/       # 😃 Mini aplicación gráfica GTK3 para teclas de Emojis
+├── emoji-studio/       # 😃 Mini app gráfica GTK3 para Emojis (Exclusivo para Linux)
 │   ├── emoji_manager.py
 │   ├── send_emoji.py
 │   ├── emojis.json
@@ -62,7 +62,11 @@ Permite alternar entre hasta 3 computadoras de forma **simultánea y coordinada*
 
 ---
 
-## 😃 2. LogiPop Emoji Studio (Linux)
+## 😃 2. LogiPop Emoji Studio (Exclusivo para Linux)
+
+> [!NOTE]
+> **¿Por qué es exclusivo para Linux?**
+> En Windows y macOS, Logitech ofrece soporte oficial para las teclas de emojis mediante *Logi Options+*. Sin embargo, **en Linux no existe software oficial**, dejando estas teclas completamente inactivas por defecto. **LogiPop Emoji Studio** solventa exclusivamente esta carencia para distribuciones Linux.
 
 Mini aplicación gráfica nativa en **GTK3** para personalizar los 4 botones mecánicos de emojis del lateral derecho del **Logitech POP Keys** y configurar la 5ta tecla (selector general del sistema operativo):
 

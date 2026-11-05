@@ -25,6 +25,10 @@ Desde cualquier aplicación o juego en Windows, presiona:
 * <kbd>Win</kbd> + <kbd>Alt</kbd> + <kbd>2</kbd> ➔ Cambiar teclado y ratón al **Dispositivo 2**
 * <kbd>Win</kbd> + <kbd>Alt</kbd> + <kbd>3</kbd> ➔ Cambiar teclado y ratón al **Dispositivo 3**
 
+> [!NOTE]
+> **¿Y las teclas de emojis en Windows?**
+> La aplicación gráfica *LogiPop Emoji Studio* de este repositorio es exclusiva para **Linux**, debido a que en Windows Logitech ya ofrece soporte completo y nativo para los emojis del POP Keys mediante su aplicación oficial **Logi Options+**. El módulo de Windows de este proyecto se enfoca 100% en la sincronización ultrarrápida Easy-Switch simultánea de ambos periféricos.
+
 ---
 
 ## 🗑️ Desinstalación

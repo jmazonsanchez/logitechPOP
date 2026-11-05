@@ -1,4 +1,7 @@
-# 😃 LogiPop Emoji Studio
+# 😃 LogiPop Emoji Studio (Exclusivo para Linux)
+
+> [!IMPORTANT]
+> **Herramienta Exclusiva para Linux:** Esta utilidad está diseñada especialmente para resolver la falta de soporte oficial de Logitech en distribuciones Linux (Ubuntu, Debian, Fedora, Arch, etc.). En Windows y macOS, Logitech ya incluye soporte nativo para los emojis del POP Keys mediante su suite oficial *Logi Options+*.
 
 Aplicación gráfica nativa (GTK3) y motor de inyección de emojis para el teclado mecánico **Logitech POP Keys** en Linux.
 

@@ -5,6 +5,13 @@
 
 set -euo pipefail
 
+# Verificación de plataforma
+if [[ "${OSTYPE:-}" != "linux"* ]]; then
+    echo "❌ Error: LogiPop Emoji Studio está diseñado exclusivamente para entornos Linux."
+    echo "En Windows, los emojis se configuran a través del software oficial de Logitech (Logi Options+)."
+    exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "=========================================================="

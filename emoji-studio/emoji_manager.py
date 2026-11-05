@@ -6,6 +6,13 @@ Interfaz gráfica nativa en GTK3 con logotipo LogiPop, paleta en matriz por tipo
 
 import os
 import sys
+
+# Verificación de plataforma: LogiPop Emoji Studio es exclusivo para Linux
+if not sys.platform.startswith("linux"):
+    print("❌ Error: LogiPop Emoji Studio está diseñado exclusivamente para distribuciones Linux.")
+    print("En Windows y macOS, los emojis se configuran con la suite oficial 'Logi Options+' de Logitech.")
+    sys.exit(1)
+
 import json
 import subprocess
 import yaml

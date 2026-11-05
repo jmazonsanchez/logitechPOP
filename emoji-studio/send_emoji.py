@@ -10,6 +10,10 @@ import json
 import os
 import time
 
+# Verificación de plataforma: exclusivo para Linux
+if not sys.platform.startswith("linux"):
+    sys.exit("Error: send_emoji.py es exclusivo para sistemas Linux.")
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(SCRIPT_DIR, "emojis.json")
 
