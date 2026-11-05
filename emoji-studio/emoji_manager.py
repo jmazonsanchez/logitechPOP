@@ -467,11 +467,11 @@ class EmojiManagerWindow(Gtk.Window):
                 existing_rules = []
 
         new_emoji_rules = [
-            [{"Rule": [{"Key": ["Emoji Smiley Heart Eyes", "pressed"]}, {"Execute": ["python3", send_script, "1"]}]}],
-            [{"Rule": [{"Key": ["Emoji Crying Face", "pressed"]}, {"Execute": ["python3", send_script, "2"]}]}],
-            [{"Rule": [{"Key": ["Emoji Smiley", "pressed"]}, {"Execute": ["python3", send_script, "3"]}]}],
-            [{"Rule": [{"Key": ["Emoji Smilie With Tears", "pressed"]}, {"Execute": ["python3", send_script, "4"]}]}],
-            [{"Rule": [{"Key": ["Emoji", "pressed"]}, {"Execute": ["python3", send_script, "5"]}]}],
+            [{"Key": ["Emoji Smiley Heart Eyes", "pressed"]}, {"Execute": ["python3", send_script, "1"]}],
+            [{"Key": ["Emoji Crying Face", "pressed"]}, {"Execute": ["python3", send_script, "2"]}],
+            [{"Key": ["Emoji Smiley", "pressed"]}, {"Execute": ["python3", send_script, "3"]}],
+            [{"Key": ["Emoji Smilie With Tears", "pressed"]}, {"Execute": ["python3", send_script, "4"]}],
+            [{"Key": ["Emoji", "pressed"]}, {"Execute": ["python3", send_script, "5"]}],
         ]
 
         all_rules = existing_rules + new_emoji_rules

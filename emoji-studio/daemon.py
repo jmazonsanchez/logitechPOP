@@ -42,12 +42,21 @@ def load_emojis():
             pass
     return emojis
 
-def copy_to_clipboard(text: str):
-    """Copia texto al portapapeles de forma persistente y nativa en Wayland."""
-    # 1. Prioridad: wl-copy local o del sistema (funciona 100% en segundo plano en Wayland)
+def copy_to_clipboard(text: str) -> bool:
+    """Copia texto al portapapeles de forma sincrónica y nativa en Wayland/X11."""
+    # 1. Prioridad: wl-copy local o del sistema en Wayland
+    # NOTA CRÍTICA: subprocess.run() síncrono garantiza que el compositor de Wayland
+    # haya completado el handshake de selección antes de disparar la pulsación virtual de Ctrl+V.
+    # El parámetro '-n' evita añadir un salto de línea indebido al emoji.
     wl_bin = WL_COPY_BIN if os.path.isfile(WL_COPY_BIN) and os.access(WL_COPY_BIN, os.X_OK) else "wl-copy"
     try:
-        p = subprocess.Popen([wl_bin, text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            [wl_bin, "-n", text],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=1.0,
+            check=True
+        )
         return True
     except Exception:
         pass
@@ -120,28 +129,37 @@ def main():
                 if data == "5":
                     # Selector de emojis de GNOME: Super + .
                     ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
+                    ui.syn()
+                    time.sleep(0.02)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 1)
                     ui.syn()
-                    time.sleep(0.03)
+                    time.sleep(0.04)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_DOT, 0)
+                    ui.syn()
+                    time.sleep(0.02)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
                     ui.syn()
                 elif data in ["1", "2", "3", "4"]:
                     emojis = load_emojis()
                     target_emoji = emojis.get(data, "😊")
 
-                    # 1. Copiar al portapapeles
+                    # 1. Copiar al portapapeles de forma sincrónica y limpia
                     copy_to_clipboard(target_emoji)
 
-                    # Pequeña pausa para asegurar que el portapapeles esté registrado
-                    time.sleep(0.02)
+                    # Pausa breve de estabilización para el compositor
+                    time.sleep(0.03)
 
-                    # 2. Simular Ctrl + V
+                    # 2. Simular Ctrl + V de forma secuencial y separada para que el
+                    # compositor registre el estado del modificador antes del carácter
                     ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
+                    ui.syn()
+                    time.sleep(0.02)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
                     ui.syn()
-                    time.sleep(0.03)
+                    time.sleep(0.04)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
+                    ui.syn()
+                    time.sleep(0.02)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
                     ui.syn()
 
