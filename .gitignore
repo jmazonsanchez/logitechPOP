@@ -9,3 +9,8 @@ __pycache__/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# User media
+*.jpeg
+*.jpg
+!logipop.svg

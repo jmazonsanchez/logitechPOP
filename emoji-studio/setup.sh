@@ -20,8 +20,8 @@ echo "=========================================================="
 echo ""
 
 # 1. Permisos de ejecución
-chmod +x "$SCRIPT_DIR/emoji_manager.py" "$SCRIPT_DIR/send_emoji.py"
-echo "✔ Permisos asignados a los scripts de Emoji Studio."
+chmod +x "$SCRIPT_DIR/emoji_manager.py" "$SCRIPT_DIR/send_emoji.py" "$SCRIPT_DIR/daemon.py" "$SCRIPT_DIR/bin/wl-copy" "$SCRIPT_DIR/bin/wl-paste"
+echo "✔ Permisos asignados a los scripts y binarios de Emoji Studio."
 
 # 2. Instalar lanzador de escritorio .desktop
 APP_DIR="$HOME/.local/share/applications"
@@ -40,7 +40,26 @@ EOF
 chmod +x "$APP_DIR/logipop-emojis.desktop"
 echo "✔ Acceso directo 'LogiPop Emoji Studio' instalado en el menú de aplicaciones."
 
-# 3. Aplicar configuración inicial y reglas en Solaar
+# 3. Configurar inicio automático del demonio en segundo plano
+AUTOSTART_DIR="$HOME/.config/autostart"
+mkdir -p "$AUTOSTART_DIR"
+cat << EOF > "$AUTOSTART_DIR/logipop-daemon.desktop"
+[Desktop Entry]
+Type=Application
+Name=LogiPop Emoji Daemon
+Comment=Demonio de inyección ultrarrápida de emojis para Logitech POP Keys
+Exec=python3 $SCRIPT_DIR/daemon.py
+Terminal=false
+Categories=Utility;
+StartupNotify=false
+EOF
+echo "✔ Demonio de teclado virtual configurado para inicio automático en el arranque."
+
+# 4. Iniciar el demonio en segundo plano
+nohup python3 "$SCRIPT_DIR/daemon.py" </dev/null &>/dev/null &
+echo "✔ Demonio de inyección activo en segundo plano."
+
+# 5. Aplicar configuración inicial y reglas en Solaar
 echo "⚙️ Configurando reglas de teclado en Solaar..."
 python3 "$SCRIPT_DIR/emoji_manager.py" --apply || true
 

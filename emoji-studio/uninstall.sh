@@ -10,14 +10,25 @@ echo "      🧹 Desinstalando LogiPop Emoji Studio"
 echo "=========================================================="
 echo ""
 
-# 1. Remover lanzador de aplicaciones
+# 1. Remover lanzador de aplicaciones y demonio autostart
 EMOJI_DESKTOP="$HOME/.local/share/applications/logipop-emojis.desktop"
 if [[ -f "$EMOJI_DESKTOP" ]]; then
     rm -f "$EMOJI_DESKTOP"
     echo "✔ Acceso directo eliminado ($EMOJI_DESKTOP)."
 fi
 
-# 2. Limpiar reglas de emojis en Solaar
+DAEMON_AUTOSTART="$HOME/.config/autostart/logipop-daemon.desktop"
+if [[ -f "$DAEMON_AUTOSTART" ]]; then
+    rm -f "$DAEMON_AUTOSTART"
+    echo "✔ Inicio automático del demonio eliminado ($DAEMON_AUTOSTART)."
+fi
+
+# 2. Detener proceso demonio
+pkill -f "emoji-studio/daemon.py" || true
+rm -f /run/user/*/logipop_emoji_*.sock /tmp/logipop_emoji_*.sock 2>/dev/null || true
+echo "✔ Demonio detenido."
+
+# 3. Limpiar reglas de emojis en Solaar
 SOLAAR_RULES_FILE="$HOME/.config/solaar/rules.yaml"
 if [[ -f "$SOLAAR_RULES_FILE" ]]; then
     python3 -c "
