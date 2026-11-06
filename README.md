@@ -162,3 +162,11 @@ Para revertir cualquier configuración o devolver el equipo al estado original:
 ```bash
 ./uninstall.sh
 ```
+
+---
+
+## 🤝 Créditos y Colaboradores
+
+* **Autor y Desarrollo Principal:** [@jmazonsanchez](https://github.com/jmazonsanchez)
+* **Pair Programming y Asistencia Técnica:** [Antigravity](https://deepmind.google/) — Advanced Agentic Coding (Google DeepMind)
+
