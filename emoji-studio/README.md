@@ -36,6 +36,7 @@ El teclado Logitech POP Keys cuenta con 5 teclas dedicadas en su lateral derecho
 9. **Tecla F4 (Captura de Pantalla Completa):** Realiza una captura instantánea de toda la pantalla y la guarda directamente en tu carpeta de Imágenes (<kbd>Shift</kbd> + <kbd>Print</kbd>).
 10. **Tecla F5 (Seleccionar Recorte de Pantalla):** Abre el selector interactivo de GNOME para recortar y capturar un área específica de la pantalla (<kbd>Print</kbd>).
 11. **Tecla F6 (Silenciar Micrófono):** Silencia o reactiva el micrófono de todo el sistema operativo (PipeWire) con indicación visual OSD en pantalla, funcionando instantáneamente en Zoom, Google Meet, Teams o Discord sin cambiar de ventana.
+12. **Tecla de Dictado / Comando de Voz (entre F12 y Supr):** Dictado de voz a texto 100% privado y offline impulsado por **Whisper.cpp**. Al presionar la tecla, emite un aviso sonoro y visual (*"🎙️ Escuchando..."*); al pulsarla nuevamente (o tras 35s), transcribe el audio en tu CPU local y pega el texto directamente en la aplicación enfocada sin enviar un solo byte a la nube.
 
 ---
 
@@ -76,6 +77,8 @@ cd emoji-studio
 * [`catalog.py`](catalog.py): Catálogo centralizado con más de 650 emojis organizados por categorías.
 * [`theme.py`](theme.py): Gestor de temas claro/oscuro adaptativo para GNOME y Wayland.
 * [`daemon.py`](daemon.py): Demonio en segundo plano con teclado virtual persistente (`/dev/uinput`), caché en memoria y socket UNIX.
+* [`dictate.py`](dictate.py): Motor de dictado por voz offline con control de estado (toggle), grabación por PipeWire y auto-pegado con Whisper.cpp.
+* [`bin/setup_whisper.sh`](bin/setup_whisper.sh): Instalador autónomo y descargador del modelo Whisper.cpp sin requerir permisos de root.
 * [`send_emoji.sh`](send_emoji.sh): Disparador POSIX ultrarrápido (<3ms) ejecutado por Solaar para comunicar la pulsación al socket UNIX.
 * [`send_emoji.py`](send_emoji.py): Disparador alternativo en Python (respaldo).
 * [`logipop.svg`](logipop.svg): Logotipo oficial vectorizado del proyecto.

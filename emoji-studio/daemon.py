@@ -150,7 +150,7 @@ def main():
         while True:
             conn, _ = server.accept()
             try:
-                data = conn.recv(64).decode("utf-8").strip()
+                data = conn.recv(8192).decode("utf-8").strip()
             except Exception:
                 data = ""
             finally:
@@ -198,6 +198,11 @@ def main():
                 time.sleep(0.012)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_MICMUTE, 0)
                 ui.syn()
+
+            elif data == "dictate":
+                # Dictado por voz (Toggle) mediante Whisper.cpp local y PipeWire
+                dictate_script = os.path.join(SCRIPT_DIR, "dictate.py")
+                subprocess.Popen(["python3", dictate_script, "toggle"], start_new_session=True)
 
             elif data in ["screenshot_full", "screenshot-full"]:
                 # Captura de pantalla completa automática (Shift + Print)

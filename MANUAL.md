@@ -20,7 +20,8 @@
 6. [Personalización y Modificación de Reglas](#6-personalización-y-modificación-de-reglas)
    * [Estructura del Archivo de Reglas (`rules.yaml`)](#61-estructura-del-archivo-de-reglas-rulesyaml)
    * [Asignar Otras Teclas (ej. Teclas de Emoji)](#62-asignar-otras-teclas-ej-teclas-de-emoji)
-   * [Recarga de Reglas sin Reiniciar](#63-recarga-de-reglas-sin-reiniciar)
+   * [Teclas Especiales y Dictado por Voz](#63-teclas-especiales-de-productividad-y-dictado-por-voz)
+   * [Recarga de Reglas sin Reiniciar](#64-recarga-de-reglas-sin-reiniciar)
 7. [Diagnóstico y Resolución de Problemas (Troubleshooting)](#7-diagnóstico-y-resolución-de-problemas-troubleshooting)
 8. [Desactivación y Retorno al Estado de Fábrica](#8-desactivación-y-retorno-al-estado-de-fábrica)
 
@@ -243,7 +244,20 @@ El proyecto incluye una aplicación gráfica nativa llamada **LogiPop Emoji Stud
 
 ---
 
-### 6.3. Recarga de Reglas sin Reiniciar
+### 6.3. Teclas Especiales de Productividad y Dictado por Voz
+Además de los 3 canales de conmutación y las teclas de emojis, el teclado Logitech POP Keys cuenta con teclas dedicadas en la fila superior:
+
+* **Tecla <kbd>F4</kbd> (Captura de Pantalla Completa):** Realiza una captura inmediata de toda la pantalla y la guarda automáticamente en `~/Imágenes/Capturas de pantalla/` mediante la combinación de sistema <kbd>Shift</kbd> + <kbd>Print</kbd>.
+* **Tecla <kbd>F5</kbd> (Seleccionar Recorte de Pantalla):** Abre el selector visual interactivo de GNOME (<kbd>Print</kbd>) para recortar un área de la pantalla o ventana.
+* **Tecla <kbd>F6</kbd> (Silenciar / Reactivar Micrófono):** Envía el evento de hardware `KEY_MICMUTE` a PipeWire/ALSA, silenciando o reactivando el micrófono con confirmación visual OSD en pantalla (funciona instantáneamente en Zoom, Meet, Teams, etc.).
+* **Tecla de Dictado por Voz (entre <kbd>F12</kbd> y <kbd>Supr</kbd>):** Dispara el sistema de transcripción de voz a texto offline con **Whisper.cpp**:
+  * **1ª pulsación:** Emite un tono auditivo y muestra la notificación *"🎙️ Dictado: Escuchando..."*.
+  * **2ª pulsación:** Finaliza la grabación, procesa el audio localmente en la CPU con el modelo `ggml-tiny.bin` y pega el texto automáticamente en la ventana activa.
+  * **Seguridad:** Incluye un temporizador watchdog que detiene la grabación automáticamente a los 35 segundos si se olvida pulsar la tecla.
+
+---
+
+### 6.4. Recarga de Reglas sin Reiniciar
 Cada vez que realices cambios en `rules.yaml`, copia el archivo y recarga el servicio sin reiniciar la sesión:
 
 ```bash

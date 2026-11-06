@@ -20,8 +20,11 @@ echo "=========================================================="
 echo ""
 
 # 1. Permisos de ejecución
-chmod +x "$SCRIPT_DIR/emoji_manager.py" "$SCRIPT_DIR/send_emoji.py" "$SCRIPT_DIR/send_emoji.sh" "$SCRIPT_DIR/daemon.py" "$SCRIPT_DIR/picker.py" "$SCRIPT_DIR/bin/wl-copy" "$SCRIPT_DIR/bin/wl-paste"
+chmod +x "$SCRIPT_DIR/emoji_manager.py" "$SCRIPT_DIR/send_emoji.py" "$SCRIPT_DIR/send_emoji.sh" "$SCRIPT_DIR/daemon.py" "$SCRIPT_DIR/picker.py" "$SCRIPT_DIR/dictate.py" "$SCRIPT_DIR/bin/setup_whisper.sh" "$SCRIPT_DIR/bin/wl-copy" "$SCRIPT_DIR/bin/wl-paste"
 echo "✔ Permisos asignados a los scripts y binarios de Emoji Studio."
+
+# 1a. Configurar motor local Whisper.cpp para dictado por voz offline
+"$SCRIPT_DIR/bin/setup_whisper.sh" || true
 
 # 1b. Restablecer los emojis por defecto (emojis.json es configuración local, no versionada)
 if [[ -f "$SCRIPT_DIR/emojis.json" ]] && ! cmp -s "$SCRIPT_DIR/emojis.default.json" "$SCRIPT_DIR/emojis.json"; then

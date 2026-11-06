@@ -17,3 +17,8 @@ Thumbs.db
 
 # Configuración local de emojis (los valores por defecto están en emojis.default.json)
 emoji-studio/emojis.json
+
+# Binarios y modelos locales de transcripción por voz (Whisper.cpp)
+emoji-studio/bin/whisper/
+*.bin
+

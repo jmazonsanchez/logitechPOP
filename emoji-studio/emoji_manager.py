@@ -37,9 +37,9 @@ SOLAAR_CONFIG_DIR = os.path.expanduser("~/.config/solaar")
 SOLAAR_CONFIG_FILE = os.path.join(SOLAAR_CONFIG_DIR, "config.yaml")
 SOLAAR_RULES_FILE = os.path.join(SOLAAR_CONFIG_DIR, "rules.yaml")
 
-# CIDs HID++ de las teclas del POP Keys: 5 teclas de emoji (260-264) + F4 Show Desktop (110) + F5 Screen Capture (266) + F6 Mic Mute (284)
+# CIDs HID++ de las teclas del POP Keys: 5 teclas de emoji (260-264) + F4 Show Desktop (110) + F5 Screen Capture (266) + F6 Mic Mute (284) + Dictation (259)
 # que Solaar debe desviar (divert-keys = 1)
-EMOJI_KEY_CIDS = (110, 260, 261, 262, 263, 264, 266, 284)
+EMOJI_KEY_CIDS = (110, 259, 260, 261, 262, 263, 264, 266, 284)
 
 DEFAULT_EMOJIS = {
     "1": "😍",
@@ -423,7 +423,8 @@ class EmojiManagerWindow(Gtk.Window):
             "Emoji",
             "Mute Microphone",
             "Show Desktop",
-            "Screen Capture"
+            "Screen Capture",
+            "Dictation",
         }
 
         def is_emoji_rule(doc):
@@ -458,6 +459,7 @@ class EmojiManagerWindow(Gtk.Window):
             [{"Key": ["Show Desktop", "pressed"]}, {"Execute": [send_script, "screenshot_full"]}],
             [{"Key": ["Screen Capture", "pressed"]}, {"Execute": [send_script, "screenshot_area"]}],
             [{"Key": ["Mute Microphone", "pressed"]}, {"Execute": [send_script, "micmute"]}],
+            [{"Key": ["Dictation", "pressed"]}, {"Execute": [send_script, "dictate"]}],
         ]
 
         all_rules = existing_rules + new_emoji_rules
