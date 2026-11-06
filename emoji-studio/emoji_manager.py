@@ -455,7 +455,7 @@ class EmojiManagerWindow(Gtk.Window):
             [{"Key": ["Emoji Smilie With Tears", "pressed"]}, {"Execute": [send_script, "4"]}],
             [{"Key": ["Emoji", "pressed"]}, {"Execute": [send_script, "5"]}],
             [{"Key": ["Mute Microphone", "pressed"]}, {"Execute": [send_script, "micmute"]}],
-            [{"Key": ["Show Desktop", "pressed"]}, {"Execute": [send_script, "showdesktop"]}],
+            [{"Key": ["Show Desktop", "pressed"]}, {"Execute": [send_script, "screen"]}],
         ]
 
         all_rules = existing_rules + new_emoji_rules

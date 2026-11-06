@@ -111,7 +111,8 @@ def main():
         ecodes.KEY_DOT,
         ecodes.KEY_SEMICOLON,
         ecodes.KEY_MICMUTE,
-        ecodes.KEY_D
+        ecodes.KEY_D,
+        ecodes.KEY_P
     ]
     cap = {ecodes.EV_KEY: needed_keys}
 
@@ -192,6 +193,16 @@ def main():
                 ui.syn()
                 time.sleep(0.012)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_MICMUTE, 0)
+                ui.syn()
+
+            elif data in ["screen", "project"]:
+                # Proyectar / Cambiar monitor o entrada de pantalla (Super + P / Switch Monitor)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_P, 1)
+                ui.syn()
+                time.sleep(0.015)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_P, 0)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
                 ui.syn()
 
             elif data == "showdesktop":
