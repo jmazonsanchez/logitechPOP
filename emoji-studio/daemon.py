@@ -113,7 +113,9 @@ def main():
         ecodes.KEY_MICMUTE,
         ecodes.KEY_D,
         ecodes.KEY_P,
-        ecodes.KEY_SWITCHVIDEOMODE
+        ecodes.KEY_SWITCHVIDEOMODE,
+        ecodes.KEY_SYSRQ,
+        ecodes.KEY_LEFTSHIFT
     ]
     cap = {ecodes.EV_KEY: needed_keys}
 
@@ -195,6 +197,36 @@ def main():
                 ui.syn()
                 time.sleep(0.012)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_MICMUTE, 0)
+                ui.syn()
+
+            elif data in ["screenshot_full", "screenshot-full"]:
+                # Captura de pantalla completa automática (Shift + Print)
+                now = time.time()
+                if (now - last_screen_time) < 0.35:
+                    continue
+                last_screen_time = now
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTSHIFT, 1)
+                ui.syn()
+                time.sleep(0.02)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_SYSRQ, 1)
+                ui.syn()
+                time.sleep(0.035)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_SYSRQ, 0)
+                ui.syn()
+                time.sleep(0.015)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTSHIFT, 0)
+                ui.syn()
+
+            elif data in ["screenshot_area", "screenshot-area", "screenshot"]:
+                # Selector interactivo de recorte de pantalla (Print)
+                now = time.time()
+                if (now - last_screen_time) < 0.35:
+                    continue
+                last_screen_time = now
+                ui.write(ecodes.EV_KEY, ecodes.KEY_SYSRQ, 1)
+                ui.syn()
+                time.sleep(0.035)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_SYSRQ, 0)
                 ui.syn()
 
             elif data in ["screen", "project"]:

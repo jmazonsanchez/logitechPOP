@@ -455,11 +455,9 @@ class EmojiManagerWindow(Gtk.Window):
             [{"Key": ["Emoji Smiley", "pressed"]}, {"Execute": [send_script, "3"]}],
             [{"Key": ["Emoji Smilie With Tears", "pressed"]}, {"Execute": [send_script, "4"]}],
             [{"Key": ["Emoji", "pressed"]}, {"Execute": [send_script, "5"]}],
+            [{"Key": ["Show Desktop", "pressed"]}, {"Execute": [send_script, "screenshot_full"]}],
+            [{"Key": ["Screen Capture", "pressed"]}, {"Execute": [send_script, "screenshot_area"]}],
             [{"Key": ["Mute Microphone", "pressed"]}, {"Execute": [send_script, "micmute"]}],
-            [{"Key": ["Show Desktop", "pressed"]}, {"Execute": [send_script, "screen"]}],
-            [{"Key": ["Show Desktop", "released"]}, {"Execute": [send_script, "screen"]}],
-            [{"Key": ["Screen Capture", "pressed"]}, {"Execute": [send_script, "screen"]}],
-            [{"Key": ["Screen Capture", "released"]}, {"Execute": [send_script, "screen"]}],
         ]
 
         all_rules = existing_rules + new_emoji_rules

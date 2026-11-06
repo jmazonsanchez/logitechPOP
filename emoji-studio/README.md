@@ -33,8 +33,9 @@ El teclado Logitech POP Keys cuenta con 5 teclas dedicadas en su lateral derecho
 6. **Prueba en Vivo (`📋 Probar`):** Cada casilla tiene un botón de prueba directa para verificar la inyección inmediata en cualquier aplicación en foco sin tocar el teclado.
 7. **Integración Transparente con Solaar:** Al presionar **"💾 Guardar y Aplicar al Teclado"**, la aplicación desvía (*divert*) las teclas en el hardware, genera las reglas en `~/.config/solaar/rules.yaml` y notifica al demonio en memoria sin demoras.
 8. **Iconos Nativos en el Sistema:** Instala iconos vectoriales SVG y mapas de bits PNG multi-resolución en `~/.local/share/icons/hicolor` para una integración visual limpia en el dock y menú de aplicaciones.
-9. **Tecla F4 (Proyectar / Entrada de Pantalla):** Abre el selector interactivo de GNOME para proyectar, duplicar pantalla o alternar hacia un monitor/proyector externo (<kbd>Super</kbd> + <kbd>P</kbd>).
-10. **Tecla F6 (Silenciar Micrófono):** Silencia o reactiva el micrófono de todo el sistema operativo (PipeWire) con indicación visual OSD en pantalla, funcionando instantáneamente en Zoom, Google Meet, Teams o Discord sin cambiar de ventana.
+9. **Tecla F4 (Captura de Pantalla Completa):** Realiza una captura instantánea de toda la pantalla y la guarda directamente en tu carpeta de Imágenes (<kbd>Shift</kbd> + <kbd>Print</kbd>).
+10. **Tecla F5 (Seleccionar Recorte de Pantalla):** Abre el selector interactivo de GNOME para recortar y capturar un área específica de la pantalla (<kbd>Print</kbd>).
+11. **Tecla F6 (Silenciar Micrófono):** Silencia o reactiva el micrófono de todo el sistema operativo (PipeWire) con indicación visual OSD en pantalla, funcionando instantáneamente en Zoom, Google Meet, Teams o Discord sin cambiar de ventana.
 
 ---
 
