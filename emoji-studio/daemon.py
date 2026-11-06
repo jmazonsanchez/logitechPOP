@@ -112,7 +112,8 @@ def main():
         ecodes.KEY_SEMICOLON,
         ecodes.KEY_MICMUTE,
         ecodes.KEY_D,
-        ecodes.KEY_P
+        ecodes.KEY_P,
+        ecodes.KEY_SWITCHVIDEOMODE
     ]
     cap = {ecodes.EV_KEY: needed_keys}
 
@@ -131,6 +132,7 @@ def main():
     # Estado del portapapeles y pre-calentamiento
     last_emoji = None
     last_paste_time = 0.0
+    last_screen_time = 0.0
     try:
         init_emojis = load_emojis()
         primary_emoji = init_emojis.get("1", "🔥")
@@ -196,12 +198,20 @@ def main():
                 ui.syn()
 
             elif data in ["screen", "project"]:
+                now = time.time()
+                if (now - last_screen_time) < 0.35:
+                    continue
+                last_screen_time = now
                 # Proyectar / Cambiar monitor o entrada de pantalla (Super + P / Switch Monitor)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
+                ui.syn()
+                time.sleep(0.02)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_P, 1)
                 ui.syn()
-                time.sleep(0.015)
+                time.sleep(0.035)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_P, 0)
+                ui.syn()
+                time.sleep(0.015)
                 ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
                 ui.syn()
 
