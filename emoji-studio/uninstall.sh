@@ -49,7 +49,9 @@ emoji_key_names = {
     'Emoji Crying Face',
     'Emoji Smiley',
     'Emoji Smilie With Tears',
-    'Emoji'
+    'Emoji',
+    'Mute Microphone',
+    'Show Desktop'
 }
 
 def is_emoji_rule(doc):

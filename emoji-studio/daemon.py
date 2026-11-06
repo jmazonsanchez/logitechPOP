@@ -109,7 +109,9 @@ def main():
         ecodes.KEY_V,
         ecodes.KEY_LEFTMETA,
         ecodes.KEY_DOT,
-        ecodes.KEY_SEMICOLON
+        ecodes.KEY_SEMICOLON,
+        ecodes.KEY_MICMUTE,
+        ecodes.KEY_D
     ]
     cap = {ecodes.EV_KEY: needed_keys}
 
@@ -183,6 +185,32 @@ def main():
                         subprocess.Popen(["python3", picker_script], start_new_session=True)
                 except Exception:
                     subprocess.Popen(["python3", picker_script], start_new_session=True)
+
+            elif data == "micmute":
+                # Silenciar / Desmutear micrófono a nivel de sistema y disparar OSD en GNOME
+                ui.write(ecodes.EV_KEY, ecodes.KEY_MICMUTE, 1)
+                ui.syn()
+                time.sleep(0.012)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_MICMUTE, 0)
+                ui.syn()
+
+            elif data == "showdesktop":
+                # Minimizar / Restaurar ventanas (Super + D - Mostrar Escritorio)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_D, 1)
+                ui.syn()
+                time.sleep(0.015)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_D, 0)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
+                ui.syn()
+
+            elif data == "overview":
+                # Vista de Actividades de GNOME (Super)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 1)
+                ui.syn()
+                time.sleep(0.015)
+                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTMETA, 0)
+                ui.syn()
 
             elif data.startswith("paste:"):
                 target_emoji = data[6:].strip()
