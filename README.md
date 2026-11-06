@@ -28,12 +28,17 @@ LogiPop/
 │   ├── switch.ps1
 │   └── README.md
 │
-├── emoji-studio/       # 😃 Suite gráfica GTK3 para Emojis (Exclusivo para Linux)
+├── emoji-studio/       # 😃 Suite gráfica GTK3 para Emojis, Atajos y Dictado por Voz (Linux)
 │   ├── emoji_manager.py
 │   ├── picker.py
+│   ├── dictate.py
 │   ├── daemon.py
 │   ├── send_emoji.sh
 │   ├── send_emoji.py
+│   ├── bin/
+│   │   ├── setup_whisper.sh
+│   │   ├── wl-copy
+│   │   └── wl-paste
 │   ├── catalog.py
 │   ├── theme.py
 │   ├── logipop.svg
@@ -87,7 +92,21 @@ Para más detalles, consulta [**`emoji-studio/README.md`**](emoji-studio/README.
 
 ---
 
-## 🚀 Instalación Rápida Todo-en-Uno
+## 🎙️📸 3. Teclas Especiales de Productividad y Dictado por Voz (Linux)
+
+Además de los emojis y la sincronización entre computadoras, la suite habilita las teclas superiores y de función del POP Keys que normalmente quedan inactivas o desaprovechadas en Linux:
+
+* **Tecla <kbd>F4</kbd> (Captura de Pantalla Completa):** Realiza una captura instantánea de toda la pantalla y la guarda directamente en `~/Imágenes/Capturas de pantalla/` mediante la combinación de sistema <kbd>Shift</kbd> + <kbd>Print</kbd>.
+* **Tecla <kbd>F5</kbd> (Seleccionar Recorte de Pantalla):** Abre el selector interactivo de recorte de GNOME (<kbd>Print</kbd>) para capturar un área o ventana específica.
+* **Tecla <kbd>F6</kbd> (Silenciar / Reactivar Micrófono):** Envía el evento nativo `KEY_MICMUTE` a PipeWire/ALSA, silenciando o reactivando el micrófono con confirmación visual OSD en pantalla, funcionando en segundo plano sin importar la aplicación enfocada (Zoom, Meet, Teams, Discord).
+* **Tecla de Dictado por Voz (entre <kbd>F12</kbd> y <kbd>Supr</kbd>):** Transcripción de voz a texto 100% offline y privada impulsada localmente por **Whisper.cpp**:
+  * **1ª pulsación:** Emite un tono auditivo y muestra la notificación *"🎙️ Dictado: Escuchando..."*.
+  * **2ª pulsación:** Detiene la grabación, transcribe el audio en tu CPU con el modelo `ggml-tiny.bin` (<1.5s) y pega el texto automáticamente en la aplicación activa.
+  * **Watchdog de seguridad:** Se detiene automáticamente a los 35 segundos si olvidas presionar la tecla.
+
+---
+
+## 🚀 4. Instalación Rápida Todo-en-Uno
 
 Desde la raíz del proyecto, ejecuta el asistente interactivo:
 
@@ -103,7 +122,7 @@ El asistente te permitirá elegir:
 
 ---
 
-## 🔄 Actualización en Otros Equipos
+## 🔄 5. Actualización en Otros Equipos
 
 Si ya tienes el repositorio clonado e instalado en varios equipos (Laptop 1, Laptop 2, PC, etc.) y deseas aplicar los cambios más recientes:
 
@@ -136,7 +155,7 @@ git pull origin main
 
 ---
 
-## 🗑️ Desinstalación
+## 🗑️ 6. Desinstalación
 
 Para revertir cualquier configuración o devolver el equipo al estado original:
 
