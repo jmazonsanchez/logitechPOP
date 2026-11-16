@@ -28,6 +28,7 @@ WL_COPY_BIN = os.path.join(SCRIPT_DIR, "bin", "wl-copy")
 UID_VAL = os.getuid()
 RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
 PID_FILE = os.path.join(RUNTIME_DIR, f"logipop_dictation_{UID_VAL}.pid")
+HELD_FILE = os.path.join(RUNTIME_DIR, f"logipop_dictation_{UID_VAL}.held")
 AUDIO_FILE = os.path.join(RUNTIME_DIR, f"logipop_dictation_{UID_VAL}.wav")
 DAEMON_SOCK = os.path.join(RUNTIME_DIR, f"logipop_emoji_{UID_VAL}.sock")
 
@@ -281,6 +282,9 @@ def run_dictation_session():
                     ambient = sum(initial_rms_samples) / 4.0
                     threshold = max(ambient * 1.45, BASE_MIN_THRESHOLD)
 
+            # Verificar si la tecla está físicamente mantenida presionada (Hold-to-Talk)
+            key_is_held = os.path.exists(HELD_FILE)
+
             # Fase 1: Esperando que el usuario comience a hablar
             if not speech_started:
                 if rms >= threshold:
@@ -291,19 +295,23 @@ def run_dictation_session():
                         silence_chunks_count = 0
                 else:
                     speech_chunks_count = 0
-                    # Si pasan 3.5 segundos sin hablar, auto-cancelar
-                    if total_duration >= INITIAL_SILENCE_LIMIT:
+                    # Si la tecla NO está presionada y pasan 3.5 segundos sin hablar, auto-cancelar
+                    if not key_is_held and total_duration >= INITIAL_SILENCE_LIMIT:
                         break
 
             # Fase 2: Voz detectada, monitoreando el silencio posterior
             else:
-                if rms < threshold:
-                    silence_chunks_count += 1
-                    # Si hay silencio continuo por SPEECH_SILENCE_LIMIT (1.2s), terminar
-                    if (silence_chunks_count * CHUNK_DURATION) >= SPEECH_SILENCE_LIMIT:
-                        break
-                else:
+                if key_is_held:
+                    # MIENTRAS LA TECLA ESTÉ PRESIONADA: PERMANECER ESCUCHANDO SIEMPRE
                     silence_chunks_count = 0
+                else:
+                    if rms < threshold:
+                        silence_chunks_count += 1
+                        # Si hay silencio continuo por SPEECH_SILENCE_LIMIT (1.2s), terminar
+                        if (silence_chunks_count * CHUNK_DURATION) >= SPEECH_SILENCE_LIMIT:
+                            break
+                    else:
+                        silence_chunks_count = 0
 
             # Límite máximo de seguridad absoluto
             if total_duration >= MAX_RECORDING_LIMIT:
@@ -322,6 +330,8 @@ def run_dictation_session():
         try:
             if os.path.exists(PID_FILE):
                 os.unlink(PID_FILE)
+            if os.path.exists(HELD_FILE):
+                os.unlink(HELD_FILE)
         except Exception:
             pass
 

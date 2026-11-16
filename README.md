@@ -100,10 +100,10 @@ Además de los emojis y la sincronización entre computadoras, la suite habilita
 * **Tecla <kbd>F5</kbd> (Seleccionar Recorte de Pantalla):** Abre el selector interactivo de recorte de GNOME (<kbd>Print</kbd>) para capturar un área o ventana específica.
 * **Tecla <kbd>F6</kbd> (Silenciar / Reactivar Micrófono):** Envía el evento nativo `KEY_MICMUTE` a PipeWire/ALSA, silenciando o reactivando el micrófono con confirmación visual OSD en pantalla, funcionando en segundo plano sin importar la aplicación enfocada (Zoom, Meet, Teams, Discord).
 * **Tecla de Dictado por Voz (entre <kbd>F12</kbd> y <kbd>Supr</kbd>):** Transcripción de voz a texto 100% offline y privada impulsada localmente por **Whisper.cpp**:
-  * **Pulsación inicial:** Emite un tono auditivo y activa la escucha (*"🎙️ Dictado: Escuchando..."*).
-  * **Detección inteligente de silencio (VAD):** Al terminar de hablar, detecta la pausa natural (1.2s de silencio) y detiene la grabación de forma 100% automática, o puedes pulsar la tecla de nuevo para detenerla de inmediato.
-  * **Copiado y Auto-pegado:** Copia el texto transcrito al portapapeles (`CLIPBOARD` y `PRIMARY`) y lo pega automáticamente (<kbd>Ctrl</kbd> + <kbd>V</kbd>) en la aplicación y pantalla enfocada.
-  * **Auto-cancelación:** Si no se detecta voz en 3.5 segundos, se cancela automáticamente sin consumir recursos.
+  * **Modo Mantener Presionado (Hold-to-Talk):** Si mantienes presionada la tecla, permanecerá escuchando continuamente sin cortes por silencio. Al soltarla, finaliza la escucha de inmediato, transcribe y pega el texto.
+  * **Modo Toque Manos Libres (Tap & Auto-VAD):** Si pulsas la tecla rápidamente, inicia la escucha; al terminar de hablar y detectar silencio (1.2s), finaliza y pega automáticamente (o puedes tocar la tecla de nuevo para corte manual inmediato).
+  * **Copiado y Auto-pegado:** Copia el texto transcrito al portapapeles (`CLIPBOARD` y `PRIMARY`) y lo pega automáticamente (<kbd>Ctrl</kbd> + <kbd>V</kbd>) en la aplicación enfocada.
+  * **Notificaciones efímeras:** Alertas visuales transitorias que expiran solas sin acumularse ni llenar la bandeja del sistema.
 
 ---
 

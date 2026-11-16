@@ -459,7 +459,8 @@ class EmojiManagerWindow(Gtk.Window):
             [{"Key": ["Show Desktop", "pressed"]}, {"Execute": [send_script, "screenshot_full"]}],
             [{"Key": ["Screen Capture", "pressed"]}, {"Execute": [send_script, "screenshot_area"]}],
             [{"Key": ["Mute Microphone", "pressed"]}, {"Execute": [send_script, "micmute"]}],
-            [{"Key": ["Dictation", "pressed"]}, {"Execute": [send_script, "dictate"]}],
+            [{"Key": ["Dictation", "pressed"]}, {"Execute": [send_script, "dictate_press"]}],
+            [{"Key": ["Dictation", "released"]}, {"Execute": [send_script, "dictate_release"]}],
         ]
 
         all_rules = existing_rules + new_emoji_rules

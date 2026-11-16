@@ -147,6 +147,13 @@ def main():
     last_paste_time = 0.0
     last_screen_time = 0.0
     dictate_proc = None
+    dictate_press_time = 0.0
+    dictate_held_file = os.path.join(os.environ.get("XDG_RUNTIME_DIR") or "/tmp", f"logipop_dictation_{os.getuid()}.held")
+    try:
+        if os.path.exists(dictate_held_file):
+            os.unlink(dictate_held_file)
+    except Exception:
+        pass
     try:
         init_emojis = load_emojis()
         primary_emoji = init_emojis.get("1", "🔥")
@@ -211,7 +218,16 @@ def main():
                 ui.write(ecodes.EV_KEY, ecodes.KEY_MICMUTE, 0)
                 ui.syn()
 
-            elif data == "dictate":
+            elif data in ["dictate_press", "dictate"]:
+                # Pulsación de la tecla de Dictado (inicio o corte manual)
+                now = time.time()
+                dictate_press_time = now
+                try:
+                    with open(dictate_held_file, "w") as f:
+                        f.write(str(now))
+                except Exception:
+                    pass
+
                 # Validación de escucha activa:
                 # Si ya está encendido el escucha, finalizar de inmediato y procesar el audio
                 dictate_script = os.path.join(SCRIPT_DIR, "dictate.py")
@@ -240,6 +256,41 @@ def main():
                             pass
                     else:
                         dictate_proc = subprocess.Popen([sys.executable, dictate_script, "start"], start_new_session=True)
+
+            elif data == "dictate_release":
+                # Al soltar la tecla de Dictado
+                now = time.time()
+                held_duration = now - dictate_press_time
+                try:
+                    if os.path.exists(dictate_held_file):
+                        os.unlink(dictate_held_file)
+                except Exception:
+                    pass
+
+                # Si el usuario mantuvo presionada la tecla (Hold-to-Talk >= 0.35s):
+                # Al soltarla, se finaliza la escucha inmediatamente y se procesa el audio
+                if held_duration >= 0.35:
+                    if dictate_proc is not None and dictate_proc.poll() is None:
+                        try:
+                            dictate_proc.send_signal(signal.SIGUSR1)
+                        except OSError:
+                            pass
+                    else:
+                        active_pid = 0
+                        pid_file = os.path.join(os.environ.get("XDG_RUNTIME_DIR") or "/tmp", f"logipop_dictation_{os.getuid()}.pid")
+                        if os.path.exists(pid_file):
+                            try:
+                                with open(pid_file, "r") as f:
+                                    p = int(f.read().strip())
+                                os.kill(p, 0)
+                                active_pid = p
+                            except Exception:
+                                pass
+                        if active_pid > 0:
+                            try:
+                                os.kill(active_pid, signal.SIGUSR1)
+                            except OSError:
+                                pass
 
             elif data in ["screenshot_full", "screenshot-full"]:
                 # Captura de pantalla completa automática (Shift + Print)
