@@ -12,6 +12,7 @@ import json
 import socket
 import select
 import subprocess
+import signal
 
 # Plataforma exclusiva Linux
 if not sys.platform.startswith("linux"):
@@ -145,6 +146,7 @@ def main():
     last_emoji = None
     last_paste_time = 0.0
     last_screen_time = 0.0
+    dictate_proc = None
     try:
         init_emojis = load_emojis()
         primary_emoji = init_emojis.get("1", "🔥")
@@ -210,9 +212,34 @@ def main():
                 ui.syn()
 
             elif data == "dictate":
-                # Dictado por voz (Toggle) mediante Whisper.cpp local y PipeWire
+                # Validación de escucha activa:
+                # Si ya está encendido el escucha, finalizar de inmediato y procesar el audio
                 dictate_script = os.path.join(SCRIPT_DIR, "dictate.py")
-                subprocess.Popen(["python3", dictate_script, "toggle"], start_new_session=True)
+                if dictate_proc is not None and dictate_proc.poll() is None:
+                    try:
+                        dictate_proc.send_signal(signal.SIGUSR1)
+                    except OSError:
+                        pass
+                else:
+                    # Comprobación de respaldo por archivo PID en caso de instancias independientes
+                    active_pid = 0
+                    pid_file = os.path.join(os.environ.get("XDG_RUNTIME_DIR") or "/tmp", f"logipop_dictation_{os.getuid()}.pid")
+                    if os.path.exists(pid_file):
+                        try:
+                            with open(pid_file, "r") as f:
+                                p = int(f.read().strip())
+                            os.kill(p, 0)
+                            active_pid = p
+                        except Exception:
+                            pass
+
+                    if active_pid > 0:
+                        try:
+                            os.kill(active_pid, signal.SIGUSR1)
+                        except OSError:
+                            pass
+                    else:
+                        dictate_proc = subprocess.Popen([sys.executable, dictate_script, "start"], start_new_session=True)
 
             elif data in ["screenshot_full", "screenshot-full"]:
                 # Captura de pantalla completa automática (Shift + Print)

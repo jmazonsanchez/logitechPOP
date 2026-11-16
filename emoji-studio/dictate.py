@@ -174,11 +174,17 @@ def run_dictation_session():
     with open(PID_FILE, "w", encoding="utf-8") as f:
         f.write(str(my_pid))
 
+    rec_proc = None
     stop_requested = False
 
     def handle_stop(signum, frame):
-        nonlocal stop_requested
+        nonlocal stop_requested, rec_proc
         stop_requested = True
+        if rec_proc is not None:
+            try:
+                rec_proc.terminate()
+            except Exception:
+                pass
 
     signal.signal(signal.SIGUSR1, handle_stop)
     signal.signal(signal.SIGINT, handle_stop)
@@ -327,7 +333,7 @@ def run_dictation_session():
         return
 
     # Verificar que el archivo de audio tenga contenido útil
-    if not os.path.exists(AUDIO_FILE) or os.path.getsize(AUDIO_FILE) < 2000:
+    if not os.path.exists(AUDIO_FILE) or os.path.getsize(AUDIO_FILE) < 1000:
         show_notification("⚠️ Audio demasiado corto", "No se registró suficiente audio para procesar.", 2000)
         return
 
