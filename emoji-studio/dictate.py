@@ -2,23 +2,28 @@
 """
 dictate.py - Módulo de Dictado por Voz Offline para Logitech POP Keys
 Utiliza Whisper.cpp local y PipeWire para transcripción de voz a texto privada,
-sin conexión a internet y con inyección instantánea en Wayland y X11.
+sin conexión a internet, con detección de silencio automática (VAD)
+y auto-pegado instantáneo en la ventana activa de Wayland y X11.
 """
 
 import os
 import sys
 import time
+import math
+import struct
 import shutil
 import signal
 import subprocess
 import re
 import socket
+import wave
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 WHISPER_DIR = os.path.join(SCRIPT_DIR, "bin", "whisper")
 MODEL_DEFAULT = os.path.join(WHISPER_DIR, "models", "ggml-tiny.bin")
 BACKENDS_DIR = os.path.join(WHISPER_DIR, "lib", "ggml", "backends0")
 LIB_DIR = os.path.join(WHISPER_DIR, "lib")
+WL_COPY_BIN = os.path.join(SCRIPT_DIR, "bin", "wl-copy")
 
 UID_VAL = os.getuid()
 RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
@@ -28,6 +33,16 @@ DAEMON_SOCK = os.path.join(RUNTIME_DIR, f"logipop_emoji_{UID_VAL}.sock")
 
 SOUND_START = "/usr/share/sounds/freedesktop/stereo/bell.oga"
 SOUND_STOP = "/usr/share/sounds/freedesktop/stereo/complete.oga"
+
+# Parámetros de detección de voz y silencio (VAD)
+SAMPLE_RATE = 16000
+CHUNK_SAMPLES = 1600         # 100 ms por bloque de audio a 16kHz
+CHUNK_BYTES = CHUNK_SAMPLES * 2  # 16-bit mono = 3200 bytes por bloque
+CHUNK_DURATION = 0.1         # 0.1 segundos
+INITIAL_SILENCE_LIMIT = 3.5  # Si no hay voz en los primeros 3.5s, se auto-cancela
+SPEECH_SILENCE_LIMIT = 1.2   # 1.2s de silencio tras hablar detiene la grabación automáticamente
+MAX_RECORDING_LIMIT = 35.0   # Límite máximo absoluto de seguridad (35s)
+BASE_MIN_THRESHOLD = 4500.0  # Umbral mínimo de energía para detectar voz humana
 
 def play_sound(sound_path: str):
     """Reproduce un sonido de notificación breve sin bloquear el hilo principal."""
@@ -41,8 +56,8 @@ def play_sound(sound_path: str):
             except Exception:
                 pass
 
-def show_notification(title: str, message: str, expire_ms: int = 3000):
-    """Muestra una notificación en GNOME / escritorio reemplazando la anterior."""
+def show_notification(title: str, message: str, expire_ms: int = 2500):
+    """Muestra una notificación en el escritorio reemplazando la anterior."""
     if shutil.which("notify-send"):
         try:
             cmd = [
@@ -56,6 +71,30 @@ def show_notification(title: str, message: str, expire_ms: int = 3000):
             subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception:
             pass
+
+def copy_to_clipboard(text: str) -> bool:
+    """Copia texto al portapapeles (CLIPBOARD y PRIMARY) de forma nativa en Wayland/X11."""
+    copied = False
+    wl_bin = WL_COPY_BIN if os.path.isfile(WL_COPY_BIN) and os.access(WL_COPY_BIN, os.X_OK) else "wl-copy"
+    try:
+        subprocess.run([wl_bin, "-n", text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=1.0, check=True)
+        subprocess.run([wl_bin, "-p", "-n", text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=1.0)
+        copied = True
+    except Exception:
+        pass
+
+    # Respaldo X11: xclip / xsel
+    for sel in ["clipboard", "primary"]:
+        for cmd in [["xclip", "-selection", sel], ["xsel", "-b" if sel == "clipboard" else "-p", "-i"]]:
+            try:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                p.communicate(input=text.encode("utf-8"), timeout=0.5)
+                copied = True
+                break
+            except Exception:
+                pass
+
+    return copied
 
 def get_best_backend(backends_path: str) -> str:
     """Selecciona la librería de backend CPU óptima según las capacidades del procesador."""
@@ -81,7 +120,6 @@ def get_best_backend(backends_path: str) -> str:
         if os.path.isfile(full_path):
             return full_path
 
-    # Respaldo: primer .so disponible en backends0
     try:
         for fname in os.listdir(backends_path):
             if fname.endswith(".so"):
@@ -92,12 +130,9 @@ def get_best_backend(backends_path: str) -> str:
 
 def clean_whisper_text(raw_text: str) -> str:
     """Limpia la transcripción eliminando alucinaciones comunes de silencio y marcadores de audio."""
-    # Eliminar marcadores entre corchetes o paréntesis como [MÚSICA], (risas), [BLANK_AUDIO]
     cleaned = re.sub(r'\[.*?\]', '', raw_text)
     cleaned = re.sub(r'\(.*?\)', '', cleaned)
-    # Normalizar espacios en blanco
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-    # Si solo quedan signos de puntuación o puntos suspensivos sin letras/números, descartar
     if not re.search(r'[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]', cleaned):
         return ""
     return cleaned
@@ -123,93 +158,187 @@ def is_recording_active() -> int:
     try:
         with open(PID_FILE, "r", encoding="utf-8") as f:
             pid = int(f.read().strip())
-        # Verificar si el proceso con ese PID existe y está vivo
         os.kill(pid, 0)
         return pid
     except (ValueError, OSError):
-        # PID no válido o proceso terminado; limpiar archivo residual
         try:
             os.unlink(PID_FILE)
         except Exception:
             pass
         return 0
 
-def start_recording():
-    """Inicia la grabación de micrófono a 16kHz mono."""
-    # Limpiar archivo de audio previo si existe
+def run_dictation_session():
+    """Inicia sesión de dictado con detección de silencio automática y auto-pegado."""
+    # 1. Registrar PID actual
+    my_pid = os.getpid()
+    with open(PID_FILE, "w", encoding="utf-8") as f:
+        f.write(str(my_pid))
+
+    stop_requested = False
+
+    def handle_stop(signum, frame):
+        nonlocal stop_requested
+        stop_requested = True
+
+    signal.signal(signal.SIGUSR1, handle_stop)
+    signal.signal(signal.SIGINT, handle_stop)
+    signal.signal(signal.SIGTERM, handle_stop)
+
+    # 2. Reproducir tono inicial de aviso y mostrar notificación
+    play_sound(SOUND_START)
+    show_notification(
+        "🎙️ Dictado: Escuchando...",
+        "Habla ahora. Se detendrá automáticamente al terminar de hablar.",
+        3500
+    )
+    # Pausa breve (250ms) para que el tono del altavoz termine y no sea captado por el micrófono
+    time.sleep(0.25)
+
+    # 3. Iniciar comando de captura de audio en streaming
+    if shutil.which("pw-record"):
+        rec_cmd = ["pw-record", "--rate", str(SAMPLE_RATE), "--channels", "1", "--format", "s16", "--container", "raw", "-"]
+    elif shutil.which("ffmpeg"):
+        rec_cmd = ["ffmpeg", "-f", "pulse", "-i", "default", "-ar", str(SAMPLE_RATE), "-ac", "1", "-f", "s16le", "-"]
+    else:
+        show_notification("❌ Error de Grabación", "No se encontró pw-record ni ffmpeg en el sistema.")
+        try:
+            os.unlink(PID_FILE)
+        except Exception:
+            pass
+        return
+
+    try:
+        rec_proc = subprocess.Popen(
+            rec_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+    except Exception as e:
+        show_notification("❌ Error", f"No se pudo iniciar el grabador de audio: {e}")
+        try:
+            os.unlink(PID_FILE)
+        except Exception:
+            pass
+        return
+
+    # 4. Preparar archivo de audio WAV
     if os.path.exists(AUDIO_FILE):
         try:
             os.unlink(AUDIO_FILE)
         except Exception:
             pass
 
-    # Comando de grabación: pw-record prioritario, fallback a ffmpeg
-    if shutil.which("pw-record"):
-        cmd = ["pw-record", "--rate", "16000", "--channels", "1", "--format", "s16", AUDIO_FILE]
-    elif shutil.which("ffmpeg"):
-        cmd = ["ffmpeg", "-y", "-f", "pulse", "-i", "default", "-ar", "16000", "-ac", "1", AUDIO_FILE]
-    else:
-        show_notification("❌ Error de Grabación", "No se encontró pw-record ni ffmpeg en el sistema.")
+    try:
+        wf = wave.open(AUDIO_FILE, "wb")
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(SAMPLE_RATE)
+    except Exception as e:
+        rec_proc.terminate()
+        show_notification("❌ Error", f"No se pudo crear archivo WAV: {e}")
+        try:
+            os.unlink(PID_FILE)
+        except Exception:
+            pass
         return
 
+    # 5. Bucle de captura con VAD (Voice Activity Detection)
+    initial_rms_samples = []
+    speech_started = False
+    speech_chunks_count = 0
+    silence_chunks_count = 0
+    total_duration = 0.0
+    threshold = BASE_MIN_THRESHOLD
+
     try:
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
-        with open(PID_FILE, "w", encoding="utf-8") as f:
-            f.write(str(proc.pid))
+        while not stop_requested:
+            chunk = rec_proc.stdout.read(CHUNK_BYTES)
+            if not chunk or len(chunk) < CHUNK_BYTES:
+                break
 
-        play_sound(SOUND_START)
-        show_notification("🎙️ Dictado: Escuchando...", "Habla ahora. Presiona la tecla de nuevo para transcribir.", 4000)
+            wf.writeframes(chunk)
+            total_duration += CHUNK_DURATION
 
-        # Iniciar temporizador de seguridad de 35s en segundo plano para auto-detener
-        watchdog_cmd = f"sleep 35 && python3 '{os.path.abspath(__file__)}' stop"
-        subprocess.Popen(watchdog_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
-    except Exception as e:
-        show_notification("❌ Error", f"No se pudo iniciar la grabación: {e}")
+            # Calcular RMS de energía AC del bloque actual
+            samples = struct.unpack(f"<{CHUNK_SAMPLES}h", chunk)
+            avg = sum(samples) / CHUNK_SAMPLES
+            rms = math.sqrt(sum((s - avg) ** 2 for s in samples) / CHUNK_SAMPLES)
 
-def stop_recording_and_transcribe():
-    """Detiene la grabación, procesa el audio con Whisper y pega el resultado."""
-    pid = is_recording_active()
-    if pid > 0:
+            # Calibración del ruido ambiente en los primeros 4 bloques (400ms)
+            if len(initial_rms_samples) < 4:
+                initial_rms_samples.append(rms)
+                if len(initial_rms_samples) == 4:
+                    ambient = sum(initial_rms_samples) / 4.0
+                    threshold = max(ambient * 1.45, BASE_MIN_THRESHOLD)
+
+            # Fase 1: Esperando que el usuario comience a hablar
+            if not speech_started:
+                if rms >= threshold:
+                    speech_chunks_count += 1
+                    # Requiere 2 bloques consecutivos (~200ms) de energía sostenida
+                    if speech_chunks_count >= 2:
+                        speech_started = True
+                        silence_chunks_count = 0
+                else:
+                    speech_chunks_count = 0
+                    # Si pasan 3.5 segundos sin hablar, auto-cancelar
+                    if total_duration >= INITIAL_SILENCE_LIMIT:
+                        break
+
+            # Fase 2: Voz detectada, monitoreando el silencio posterior
+            else:
+                if rms < threshold:
+                    silence_chunks_count += 1
+                    # Si hay silencio continuo por SPEECH_SILENCE_LIMIT (1.2s), terminar
+                    if (silence_chunks_count * CHUNK_DURATION) >= SPEECH_SILENCE_LIMIT:
+                        break
+                else:
+                    silence_chunks_count = 0
+
+            # Límite máximo de seguridad absoluto
+            if total_duration >= MAX_RECORDING_LIMIT:
+                break
+    finally:
+        wf.close()
         try:
-            # Enviar SIGINT para que el grabador cierre el archivo WAV con encabezado válido
-            os.kill(pid, signal.SIGINT)
-            # Esperar hasta 1 segundo a que el proceso termine
-            for _ in range(10):
-                time.sleep(0.1)
-                try:
-                    os.kill(pid, 0)
-                except OSError:
-                    break
+            rec_proc.terminate()
+            rec_proc.wait(timeout=0.6)
+        except Exception:
+            try:
+                rec_proc.kill()
+            except Exception:
+                pass
+
+        try:
+            if os.path.exists(PID_FILE):
+                os.unlink(PID_FILE)
         except Exception:
             pass
 
-    # Eliminar PID file
-    try:
-        if os.path.exists(PID_FILE):
-            os.unlink(PID_FILE)
-    except Exception:
-        pass
+    # 6. Evaluar si hubo voz
+    if not speech_started and not stop_requested:
+        if os.path.exists(AUDIO_FILE):
+            try:
+                os.unlink(AUDIO_FILE)
+            except Exception:
+                pass
+        show_notification("⚠️ No se detectó voz", "No se detectó actividad de voz.", 2000)
+        return
 
-    play_sound(SOUND_STOP)
-
-    # Verificar que el archivo de audio exista y tenga contenido
-    if not os.path.exists(AUDIO_FILE) or os.path.getsize(AUDIO_FILE) < 1000:
+    # Verificar que el archivo de audio tenga contenido útil
+    if not os.path.exists(AUDIO_FILE) or os.path.getsize(AUDIO_FILE) < 2000:
         show_notification("⚠️ Audio demasiado corto", "No se registró suficiente audio para procesar.", 2000)
         return
 
-    show_notification("⚙️ Transcribiendo...", "Procesando voz con Whisper local...", 3000)
+    play_sound(SOUND_STOP)
+    show_notification("⚙️ Transcribiendo...", "Procesando voz con Whisper local...", 2500)
 
-    # Localizar binario de whisper-cli
+    # 7. Localizar binario y modelo de Whisper
     whisper_bin = os.path.join(WHISPER_DIR, "whisper-cli")
     if not (os.path.isfile(whisper_bin) and os.access(whisper_bin, os.X_OK)):
         whisper_bin = shutil.which("whisper-cli") or shutil.which("whisper")
 
-    # Localizar modelo
     model_path = MODEL_DEFAULT
     if not os.path.isfile(model_path):
         for candidate in ["/usr/share/whisper.cpp-models/ggml-tiny.bin", os.path.expanduser("~/.cache/whisper/ggml-tiny.bin")]:
@@ -218,11 +347,9 @@ def stop_recording_and_transcribe():
                 break
 
     if not whisper_bin or not os.path.isfile(model_path):
-        setup_script = os.path.join(SCRIPT_DIR, "bin", "setup_whisper.sh")
         show_notification("⚠️ Whisper no instalado", "Ejecuta setup_whisper.sh para descargar el motor local.", 4000)
         return
 
-    # Preparar entorno para whisper-cli
     env = os.environ.copy()
     if os.path.isdir(LIB_DIR):
         env["LD_LIBRARY_PATH"] = f"{LIB_DIR}:{env.get('LD_LIBRARY_PATH', '')}"
@@ -253,26 +380,35 @@ def stop_recording_and_transcribe():
 
     clean_text = clean_whisper_text(raw_output)
 
+    # 8. Copiado automático al portapapeles e inyección instantánea (Ctrl+V)
     if clean_text:
-        # Notificación con el texto transcrito
-        display_preview = clean_text if len(clean_text) <= 50 else (clean_text[:47] + "...")
-        show_notification("✅ Transcrito:", f"«{display_preview}»", 2500)
+        # A. Copiar inmediatamente al portapapeles (CLIPBOARD y PRIMARY)
+        copy_to_clipboard(clean_text)
 
-        # Inyectar texto vía el demonio de teclado virtual (paste:<texto>)
-        if not send_to_daemon(f"paste:{clean_text}"):
-            # Si el demonio no está activo, copiar al portapapeles con wl-copy
-            wl_copy = os.path.join(SCRIPT_DIR, "bin", "wl-copy")
-            if os.path.isfile(wl_copy):
-                subprocess.run([wl_copy, "-n", clean_text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # B. Enviar comando de pegado al demonio de teclado virtual (/dev/uinput)
+        pasted = send_to_daemon(f"paste:{clean_text}")
+
+        # C. Notificación al usuario
+        display_preview = clean_text if len(clean_text) <= 50 else (clean_text[:47] + "...")
+        if pasted:
+            show_notification("✅ Transcrito y Pegado:", f"«{display_preview}»", 2500)
+        else:
+            show_notification("📋 Copiado al Portapapeles:", f"«{display_preview}»\n(Pega con Ctrl+V)", 3000)
     else:
         show_notification("⚠️ No se detectó voz", "Intenta hablar más cerca del micrófono.", 2000)
 
 def toggle_recording():
-    """Alterna entre iniciar y detener la grabación."""
-    if is_recording_active() > 0:
-        stop_recording_and_transcribe()
+    """Alterna entre iniciar con VAD o detener manualmente de inmediato."""
+    active_pid = is_recording_active()
+    if active_pid > 0:
+        # Si ya está grabando, la segunda pulsación detiene manualmente de inmediato
+        try:
+            os.kill(active_pid, signal.SIGUSR1)
+        except OSError:
+            pass
     else:
-        start_recording()
+        # Primera pulsación: arranca grabación con detección de silencio automática
+        run_dictation_session()
 
 def main():
     action = sys.argv[1] if len(sys.argv) > 1 else "toggle"
@@ -280,10 +416,14 @@ def main():
         toggle_recording()
     elif action == "start":
         if is_recording_active() == 0:
-            start_recording()
+            run_dictation_session()
     elif action == "stop":
-        if is_recording_active() > 0:
-            stop_recording_and_transcribe()
+        active_pid = is_recording_active()
+        if active_pid > 0:
+            try:
+                os.kill(active_pid, signal.SIGUSR1)
+            except OSError:
+                pass
     elif action == "status":
         active = is_recording_active()
         print(f"Recording active: {active > 0} (PID: {active})")

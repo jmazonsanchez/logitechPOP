@@ -36,7 +36,7 @@ El teclado Logitech POP Keys cuenta con 5 teclas dedicadas en su lateral derecho
 9. **Tecla F4 (Captura de Pantalla Completa):** Realiza una captura instantánea de toda la pantalla y la guarda directamente en tu carpeta de Imágenes (<kbd>Shift</kbd> + <kbd>Print</kbd>).
 10. **Tecla F5 (Seleccionar Recorte de Pantalla):** Abre el selector interactivo de GNOME para recortar y capturar un área específica de la pantalla (<kbd>Print</kbd>).
 11. **Tecla F6 (Silenciar Micrófono):** Silencia o reactiva el micrófono de todo el sistema operativo (PipeWire) con indicación visual OSD en pantalla, funcionando instantáneamente en Zoom, Google Meet, Teams o Discord sin cambiar de ventana.
-12. **Tecla de Dictado / Comando de Voz (entre F12 y Supr):** Dictado de voz a texto 100% privado y offline impulsado por **Whisper.cpp**. Al presionar la tecla, emite un aviso sonoro y visual (*"🎙️ Escuchando..."*); al pulsarla nuevamente (o tras 35s), transcribe el audio en tu CPU local y pega el texto directamente en la aplicación enfocada sin enviar un solo byte a la nube.
+12. **Tecla de Dictado / Comando de Voz (entre F12 y Supr):** Dictado de voz a texto 100% privado y offline impulsado por **Whisper.cpp**. Al presionar la tecla, emite un aviso sonoro y visual (*"🎙️ Escuchando..."*). Cuenta con detección inteligente de silencio (VAD) para detenerse automáticamente al terminar de hablar (o pulsando la tecla de nuevo para corte inmediato), copia el texto al portapapeles y lo pega automáticamente (<kbd>Ctrl</kbd> + <kbd>V</kbd>) en la aplicación activa sin enviar ningún dato a la nube.
 
 ---
 

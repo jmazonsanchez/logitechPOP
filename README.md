@@ -100,9 +100,10 @@ Además de los emojis y la sincronización entre computadoras, la suite habilita
 * **Tecla <kbd>F5</kbd> (Seleccionar Recorte de Pantalla):** Abre el selector interactivo de recorte de GNOME (<kbd>Print</kbd>) para capturar un área o ventana específica.
 * **Tecla <kbd>F6</kbd> (Silenciar / Reactivar Micrófono):** Envía el evento nativo `KEY_MICMUTE` a PipeWire/ALSA, silenciando o reactivando el micrófono con confirmación visual OSD en pantalla, funcionando en segundo plano sin importar la aplicación enfocada (Zoom, Meet, Teams, Discord).
 * **Tecla de Dictado por Voz (entre <kbd>F12</kbd> y <kbd>Supr</kbd>):** Transcripción de voz a texto 100% offline y privada impulsada localmente por **Whisper.cpp**:
-  * **1ª pulsación:** Emite un tono auditivo y muestra la notificación *"🎙️ Dictado: Escuchando..."*.
-  * **2ª pulsación:** Detiene la grabación, transcribe el audio en tu CPU con el modelo `ggml-tiny.bin` (<1.5s) y pega el texto automáticamente en la aplicación activa.
-  * **Watchdog de seguridad:** Se detiene automáticamente a los 35 segundos si olvidas presionar la tecla.
+  * **Pulsación inicial:** Emite un tono auditivo y activa la escucha (*"🎙️ Dictado: Escuchando..."*).
+  * **Detección inteligente de silencio (VAD):** Al terminar de hablar, detecta la pausa natural (1.2s de silencio) y detiene la grabación de forma 100% automática, o puedes pulsar la tecla de nuevo para detenerla de inmediato.
+  * **Copiado y Auto-pegado:** Copia el texto transcrito al portapapeles (`CLIPBOARD` y `PRIMARY`) y lo pega automáticamente (<kbd>Ctrl</kbd> + <kbd>V</kbd>) en la aplicación y pantalla enfocada.
+  * **Auto-cancelación:** Si no se detecta voz en 3.5 segundos, se cancela automáticamente sin consumir recursos.
 
 ---
 

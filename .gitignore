@@ -22,3 +22,7 @@ emoji-studio/emojis.json
 emoji-studio/bin/whisper/
 *.bin
 
+# Tooling artifacts
+.codegraph/
+
+

@@ -251,9 +251,10 @@ Además de los 3 canales de conmutación y las teclas de emojis, el teclado Logi
 * **Tecla <kbd>F5</kbd> (Seleccionar Recorte de Pantalla):** Abre el selector visual interactivo de GNOME (<kbd>Print</kbd>) para recortar un área de la pantalla o ventana.
 * **Tecla <kbd>F6</kbd> (Silenciar / Reactivar Micrófono):** Envía el evento de hardware `KEY_MICMUTE` a PipeWire/ALSA, silenciando o reactivando el micrófono con confirmación visual OSD en pantalla (funciona instantáneamente en Zoom, Meet, Teams, etc.).
 * **Tecla de Dictado por Voz (entre <kbd>F12</kbd> y <kbd>Supr</kbd>):** Dispara el sistema de transcripción de voz a texto offline con **Whisper.cpp**:
-  * **1ª pulsación:** Emite un tono auditivo y muestra la notificación *"🎙️ Dictado: Escuchando..."*.
-  * **2ª pulsación:** Finaliza la grabación, procesa el audio localmente en la CPU con el modelo `ggml-tiny.bin` y pega el texto automáticamente en la ventana activa.
-  * **Seguridad:** Incluye un temporizador watchdog que detiene la grabación automáticamente a los 35 segundos si se olvida pulsar la tecla.
+  * **Activación de escucha:** Emite un tono auditivo y muestra la notificación *"🎙️ Dictado: Escuchando..."*.
+  * **Detección automática de silencio (VAD):** Al terminar de hablar, detecta la pausa natural (1.2s de silencio) y finaliza la grabación de manera 100% autónoma, procesando el audio en la CPU local con el modelo `ggml-tiny.bin`. Si lo deseas, también puedes presionar la tecla una segunda vez para detener la grabación de inmediato.
+  * **Copia al portapapeles y auto-pegado:** Copia el texto transcrito al portapapeles del sistema y lo inyecta automáticamente (<kbd>Ctrl</kbd> + <kbd>V</kbd>) en la aplicación y ventana en foco.
+  * **Auto-cancelación preventiva:** Si no se detecta voz dentro de los primeros 3.5 segundos, la sesión se cancela automáticamente para no consumir CPU ni batería.
 
 ---
 

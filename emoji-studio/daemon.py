@@ -56,7 +56,8 @@ def load_emojis():
         return _cached_emojis or DEFAULT_EMOJIS.copy()
 
 def copy_to_clipboard(text: str) -> bool:
-    """Copia texto al portapapeles de forma sincrónica y nativa en Wayland/X11."""
+    """Copia texto al portapapeles (CLIPBOARD y PRIMARY) de forma nativa en Wayland/X11."""
+    copied = False
     # 1. Prioridad: wl-copy local o del sistema en Wayland
     wl_bin = WL_COPY_BIN if os.path.isfile(WL_COPY_BIN) and os.access(WL_COPY_BIN, os.X_OK) else "wl-copy"
     try:
@@ -67,20 +68,29 @@ def copy_to_clipboard(text: str) -> bool:
             timeout=1.0,
             check=True
         )
-        return True
+        # Copiar también a selección primaria
+        subprocess.run(
+            [wl_bin, "-p", "-n", text],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=1.0
+        )
+        copied = True
     except Exception:
         pass
 
     # 2. Respaldo: xclip / xsel (X11)
-    for cmd in [["xclip", "-selection", "clipboard"], ["xsel", "-b", "-i"]]:
-        try:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            p.communicate(input=text.encode("utf-8"), timeout=0.5)
-            return True
-        except Exception:
-            pass
+    for sel in ["clipboard", "primary"]:
+        for cmd in [["xclip", "-selection", sel], ["xsel", "-b" if sel == "clipboard" else "-p", "-i"]]:
+            try:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                p.communicate(input=text.encode("utf-8"), timeout=0.5)
+                copied = True
+                break
+            except Exception:
+                pass
 
-    return False
+    return copied
 
 def main():
     import evdev
@@ -271,24 +281,25 @@ def main():
                 ui.syn()
 
             elif data.startswith("paste:"):
-                target_emoji = data[6:].strip()
-                if target_emoji:
-                    # Pausa breve (~70ms) para que GNOME Mutter devuelva el foco a la ventana anterior
-                    time.sleep(0.07)
-                    copy_to_clipboard(target_emoji)
-                    last_emoji = target_emoji
+                target_text = data[6:].strip()
+                if target_text:
+                    # Copiar a portapapeles (CLIPBOARD y PRIMARY)
+                    copy_to_clipboard(target_text)
+                    last_emoji = target_text
                     last_paste_time = time.time()
+                    # Pausa breve (~60ms) para que el compositor registre la nueva oferta de datos
+                    time.sleep(0.06)
 
-                    # Simular Ctrl + V para insertar en la ventana activa previa
+                    # Simular Ctrl + V con pulsaciones seguras para Wayland y X11
                     ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
                     ui.syn()
-                    time.sleep(0.005)
+                    time.sleep(0.025)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
                     ui.syn()
-                    time.sleep(0.012)
+                    time.sleep(0.035)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
                     ui.syn()
-                    time.sleep(0.005)
+                    time.sleep(0.020)
                     ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
                     ui.syn()
             elif data in ["1", "2", "3", "4"]:
