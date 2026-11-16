@@ -56,13 +56,16 @@ def play_sound(sound_path: str):
             except Exception:
                 pass
 
-def show_notification(title: str, message: str, expire_ms: int = 2500):
-    """Muestra una notificación en el escritorio reemplazando la anterior."""
+def show_notification(title: str, message: str, expire_ms: int = 1800):
+    """Muestra una notificación efímera en el escritorio que expira y no se acumula en la bandeja."""
     if shutil.which("notify-send"):
         try:
             cmd = [
                 "notify-send",
+                "-e",  # --transient: evita que persista o se guarde en la bandeja de notificaciones
+                "-u", "low",  # Prioridad baja para que no bloquee ni acumule alertas
                 "-h", "string:x-canonical-private-synchronous:logipop_dictate",
+                "-h", "boolean:transient:true",
                 "-t", str(expire_ms),
                 "-a", "LogiPop Dictado",
                 title,
@@ -195,7 +198,7 @@ def run_dictation_session():
     show_notification(
         "🎙️ Dictado: Escuchando...",
         "Habla ahora. Se detendrá automáticamente al terminar de hablar.",
-        3500
+        2000
     )
     # Pausa breve (250ms) para que el tono del altavoz termine y no sea captado por el micrófono
     time.sleep(0.25)
@@ -329,16 +332,16 @@ def run_dictation_session():
                 os.unlink(AUDIO_FILE)
             except Exception:
                 pass
-        show_notification("⚠️ No se detectó voz", "No se detectó actividad de voz.", 2000)
+        show_notification("⚠️ No se detectó voz", "No se detectó actividad de voz.", 1500)
         return
 
     # Verificar que el archivo de audio tenga contenido útil
     if not os.path.exists(AUDIO_FILE) or os.path.getsize(AUDIO_FILE) < 1000:
-        show_notification("⚠️ Audio demasiado corto", "No se registró suficiente audio para procesar.", 2000)
+        show_notification("⚠️ Audio demasiado corto", "No se registró suficiente audio para procesar.", 1500)
         return
 
     play_sound(SOUND_STOP)
-    show_notification("⚙️ Transcribiendo...", "Procesando voz con Whisper local...", 2500)
+    show_notification("⚙️ Transcribiendo...", "Procesando voz con Whisper local...", 1500)
 
     # 7. Localizar binario y modelo de Whisper
     whisper_bin = os.path.join(WHISPER_DIR, "whisper-cli")
@@ -397,11 +400,11 @@ def run_dictation_session():
         # C. Notificación al usuario
         display_preview = clean_text if len(clean_text) <= 50 else (clean_text[:47] + "...")
         if pasted:
-            show_notification("✅ Transcrito y Pegado:", f"«{display_preview}»", 2500)
+            show_notification("✅ Transcrito y Pegado:", f"«{display_preview}»", 1800)
         else:
-            show_notification("📋 Copiado al Portapapeles:", f"«{display_preview}»\n(Pega con Ctrl+V)", 3000)
+            show_notification("📋 Copiado al Portapapeles:", f"«{display_preview}»\n(Pega con Ctrl+V)", 2000)
     else:
-        show_notification("⚠️ No se detectó voz", "Intenta hablar más cerca del micrófono.", 2000)
+        show_notification("⚠️ No se detectó voz", "Intenta hablar más cerca del micrófono.", 1500)
 
 def toggle_recording():
     """Alterna entre iniciar con VAD o detener manualmente de inmediato."""
