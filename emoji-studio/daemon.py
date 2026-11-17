@@ -13,6 +13,7 @@ import socket
 import select
 import subprocess
 import signal
+import threading
 
 # Plataforma exclusiva Linux
 if not sys.platform.startswith("linux"):
@@ -93,6 +94,124 @@ def copy_to_clipboard(text: str) -> bool:
 
     return copied
 
+# ==============================================================================
+# Detección automática de ventana activa (Terminal vs Aplicación Estándar)
+# ==============================================================================
+TERMINAL_KEYWORDS = {
+    "ptyxis", "gnome-terminal", "terminal", "konsole", "alacritty", "kitty",
+    "tilix", "xterm", "urxvt", "terminator", "wezterm", "foot", "contour",
+    "blackbox", "guake", "tilda", "xfce4-terminal", "hyper", "tabby", "lxterminal"
+}
+
+_active_window_info = {
+    "is_terminal": False,
+    "app_name": ""
+}
+
+def _check_is_terminal(app_name, win_name=""):
+    app_low = (app_name or "").lower()
+    win_low = (win_name or "").lower()
+    if any(k in app_low for k in TERMINAL_KEYWORDS):
+        return True
+    if "terminal" in win_low or "consola" in win_low:
+        return True
+    return False
+
+def _start_active_window_tracker():
+    """
+    Rastreador en tiempo real vía AT-SPI (estándar nativo para GNOME/Wayland).
+    Se ejecuta en un hilo secundario sin afectar la latencia del demonio (<1ms).
+    """
+    def tracker_thread():
+        try:
+            import gi
+            gi.require_version("Atspi", "2.0")
+            from gi.repository import Atspi, GLib
+
+            def on_event(event):
+                if not event.source:
+                    return
+                try:
+                    if event.type == "window:activate" or (
+                        event.type == "object:state-changed:active" and getattr(event, "detail1", 0) == 1
+                    ):
+                        app = event.source.get_application()
+                        app_name = app.get_name() if app else ""
+                        win_name = event.source.get_name() or ""
+                        if app_name and app_name != "gnome-shell":
+                            _active_window_info["app_name"] = app_name
+                            _active_window_info["is_terminal"] = _check_is_terminal(app_name, win_name)
+                except Exception:
+                    pass
+
+            def initial_scan():
+                try:
+                    desktop = Atspi.get_desktop(0)
+                    for i in range(desktop.get_child_count()):
+                        app = desktop.get_child_at_index(i)
+                        if not app:
+                            continue
+                        name = (app.get_name() or "").lower()
+                        if name in ("gnome-shell", "mutter-x11-frames"):
+                            continue
+                        for j in range(app.get_child_count()):
+                            w = app.get_child_at_index(j)
+                            if not w:
+                                continue
+                            if Atspi.StateType.ACTIVE in w.get_state_set().get_states():
+                                _active_window_info["app_name"] = app.get_name()
+                                _active_window_info["is_terminal"] = _check_is_terminal(app.get_name(), w.get_name())
+                                return
+                except Exception:
+                    pass
+
+            l1 = Atspi.EventListener.new(on_event)
+            l1.register("window:activate")
+            l2 = Atspi.EventListener.new(on_event)
+            l2.register("object:state-changed:active")
+            initial_scan()
+
+            loop = GLib.MainLoop()
+            loop.run()
+        except Exception:
+            pass
+
+    t = threading.Thread(target=tracker_thread, daemon=True, name="WindowTracker")
+    t.start()
+
+def emit_paste(ui, ecodes, is_terminal=False, fast=False):
+    """
+    Emite la pulsación de pegado adecuada según el tipo de ventana activa:
+    - Terminal (Ptyxis, GNOME Terminal, etc.): Ctrl + Shift + V
+    - Aplicación GUI estándar (Navegador, Chats, Editores): Ctrl + V
+    """
+    if is_terminal:
+        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTSHIFT, 1)
+        ui.syn()
+        time.sleep(0.010 if fast else 0.025)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
+        ui.syn()
+        time.sleep(0.015 if fast else 0.035)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
+        ui.syn()
+        time.sleep(0.010 if fast else 0.020)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTSHIFT, 0)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
+        ui.syn()
+    else:
+        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
+        ui.syn()
+        time.sleep(0.005 if fast else 0.025)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
+        ui.syn()
+        time.sleep(0.012 if fast else 0.035)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
+        ui.syn()
+        time.sleep(0.005 if fast else 0.020)
+        ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
+        ui.syn()
+
 def main():
     import evdev
     from evdev import ecodes
@@ -162,6 +281,9 @@ def main():
         last_paste_time = time.time()
     except Exception:
         pass
+
+    # Iniciar rastreador en tiempo real de ventana activa (Terminal vs Aplicación GUI)
+    _start_active_window_tracker()
 
     print("LogiPop Daemon ultrarrápido iniciado y listo.")
 
@@ -368,18 +490,10 @@ def main():
                     # Pausa breve (~60ms) para que el compositor registre la nueva oferta de datos
                     time.sleep(0.06)
 
-                    # Simular Ctrl + V con pulsaciones seguras para Wayland y X11
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
-                    ui.syn()
-                    time.sleep(0.025)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
-                    ui.syn()
-                    time.sleep(0.035)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
-                    ui.syn()
-                    time.sleep(0.020)
-                    ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
-                    ui.syn()
+                    # Inyección inteligente según la ventana activa:
+                    # Ctrl + Shift + V en terminales de Linux, Ctrl + V en aplicaciones de escritorio estándar
+                    is_term = _active_window_info.get("is_terminal", False)
+                    emit_paste(ui, ecodes, is_terminal=is_term, fast=False)
             elif data in ["1", "2", "3", "4"]:
                 emojis = load_emojis()
                 target_emoji = emojis.get(data, "😊")
@@ -393,18 +507,9 @@ def main():
 
                 last_paste_time = now
 
-                # Simulación de Ctrl + V de alta respuesta (~22ms)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 1)
-                ui.syn()
-                time.sleep(0.005)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_V, 1)
-                ui.syn()
-                time.sleep(0.012)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_V, 0)
-                ui.syn()
-                time.sleep(0.005)
-                ui.write(ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, 0)
-                ui.syn()
+                # Inyección inteligente rápida (~22ms) según ventana activa
+                is_term = _active_window_info.get("is_terminal", False)
+                emit_paste(ui, ecodes, is_terminal=is_term, fast=True)
     except KeyboardInterrupt:
         pass
     finally:
