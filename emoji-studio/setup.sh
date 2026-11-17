@@ -35,6 +35,16 @@ fi
 cp -f "$SCRIPT_DIR/emojis.default.json" "$SCRIPT_DIR/emojis.json"
 echo "✔ Emojis por defecto aplicados (Tecla 1: 😍  2: 😂  3: 😊  4: 🔥)."
 
+# 1c. Integrar herramientas de portapapeles en PATH (~/.local/bin)
+mkdir -p "$HOME/.local/bin"
+if [[ -f "$SCRIPT_DIR/bin/wl-copy" ]] && [[ ! -e "$HOME/.local/bin/wl-copy" ]]; then
+    ln -sf "$SCRIPT_DIR/bin/wl-copy" "$HOME/.local/bin/wl-copy"
+fi
+if [[ -f "$SCRIPT_DIR/bin/wl-paste" ]] && [[ ! -e "$HOME/.local/bin/wl-paste" ]]; then
+    ln -sf "$SCRIPT_DIR/bin/wl-paste" "$HOME/.local/bin/wl-paste"
+fi
+echo "✔ Herramientas de portapapeles Wayland (wl-copy, wl-paste) integradas en PATH."
+
 # 2. Instalar iconos en el tema del sistema (XDG Icon Theme) para menú, dock y ventana
 ICON_THEME_DIR="$HOME/.local/share/icons/hicolor"
 mkdir -p "$ICON_THEME_DIR/scalable/apps"

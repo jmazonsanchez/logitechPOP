@@ -85,5 +85,6 @@ cd emoji-studio
 * [`emojis.default.json`](emojis.default.json): Configuración inicial por defecto (😍 😂 😊 🔥).
 * `emojis.json`: Archivo de configuración local generado por la aplicación (ignorado en git).
 * [`bin/wl-copy`](bin/): Binario independiente de gestión de portapapeles para entornos Wayland.
+* [`bin/wl-paste`](bin/): Binario independiente de lectura del portapapeles para entornos Wayland.
 * [`setup.sh`](setup.sh): Instalador de iconos, lanzador `.desktop`, servicio de autostart y reglas de Solaar.
 * [`uninstall.sh`](uninstall.sh): Desinstalador limpio para revertir todas las configuraciones.
